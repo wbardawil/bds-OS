@@ -1,0 +1,16 @@
+{
+  "name": "bds-os",
+  "version": "1.0.0",
+  "description": "BDS Operating System — P&L-Driven Operating Maturity & Capital Allocation System",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "db:reset": "supabase db reset",
+    "db:migrate": "supabase migration up",
+    "functions:serve": "supabase functions serve"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "@supabase/supabase-js": "^2.45.0"
+  }
+}

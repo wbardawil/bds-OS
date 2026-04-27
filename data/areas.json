@@ -1,0 +1,10 @@
+[
+  { "id": 1, "name": "Finance & Unit Economics", "description": "Revenue models, pricing, cash flow, financial planning, and unit economics that drive P&L performance.", "sort_order": 1 },
+  { "id": 2, "name": "Product & Offering", "description": "Product strategy, roadmap, development lifecycle, customer feedback loops, and competitive positioning.", "sort_order": 2 },
+  { "id": 3, "name": "Go-To-Market & Sales", "description": "Sales process, pipeline management, customer acquisition, channel strategy, and revenue generation.", "sort_order": 3 },
+  { "id": 4, "name": "Marketing & Brand", "description": "Brand positioning, demand generation, content strategy, marketing operations, and market awareness.", "sort_order": 4 },
+  { "id": 5, "name": "People & Organization", "description": "Talent acquisition, culture, performance management, organizational design, and leadership development.", "sort_order": 5 },
+  { "id": 6, "name": "Technology & Infrastructure", "description": "Architecture, engineering practices, security, scalability, and technical debt management.", "sort_order": 6 },
+  { "id": 7, "name": "Delivery & Operations", "description": "Project delivery, operational efficiency, quality assurance, process optimization, and supply chain.", "sort_order": 7 },
+  { "id": 8, "name": "Governance & Leadership", "description": "Strategic planning, decision-making frameworks, board management, risk governance, and executive alignment.", "sort_order": 8 }
+]
