@@ -152,7 +152,38 @@ Deno.serve(async (req: Request) => {
 
     if (updateError) return errorResponse(`Failed to update evidence: ${updateError.message}`);
 
-    // 7. Update initiative status to ai_pre_graded
+    // 7. Audit the grading event (best-effort: failure does not block response)
+    const { error: auditError } = await supabase.from('audit_log').insert({
+      organization_id: organizationId,
+      action: 'grade',
+      resource_type: 'evidence',
+      resource_id: evidence_id,
+      before: {
+        quality_score: evidence.quality_score,
+        ai_grading_rationale: evidence.ai_grading_rationale,
+        ai_confidence: evidence.ai_confidence,
+        level_proposal: evidence.level_proposal,
+        graded_at: evidence.graded_at,
+      },
+      after: {
+        quality_score: qualityScore,
+        ai_grading_rationale: rationale,
+        ai_confidence: confidence,
+        level_proposal: levelProposal,
+        graded_at: new Date().toISOString(),
+      },
+      metadata: {
+        source: 'edge_function:grade-evidence',
+        practice_id: practiceId,
+        target_level: targetLevel,
+        recommendation_action: recommendation.action,
+      },
+    });
+    if (auditError) {
+      console.warn(`audit_log insert failed for evidence ${evidence_id}: ${auditError.message}`);
+    }
+
+    // 8. Update initiative status to ai_pre_graded
     const { error: initError } = await supabase
       .from('initiatives')
       .update({ status: 'ai_pre_graded' })
