@@ -15,10 +15,36 @@ Five layers, each grounded in real data:
 4. **Execution + evidence loop** — initiatives, evidence uploads, AI grading against the rubric, formal score-change requests, senior approval. Maturity scores only go up when there's *documented* change, not self-reported.
 5. **Governance dashboards** — three distinct views: executive (this-week focus + risk alerts), board (long-term maturity trajectory + operating debt), functional (per-leader owned practices + pending evidence queue).
 
-## Who it's for
-- **Primary**: new or first-time CEOs stepping into leadership and looking for a Monday-morning compass.
-- **Secondary**: their leadership team (CFO, COO, functional heads) who score their own areas and own initiatives in their domain.
-- **Tertiary**: the board — a quarterly snapshot of how the business is maturing, harder to fake than self-reported KPIs.
+## Ideal Customer Profile
+
+**Company**:
+- Revenue: $10M–$250M (small-to-mid-market)
+- Headcount: 50–500 employees with a defined leadership team (CEO + 4–8 functional heads)
+- Stage: post-product-market-fit, in growth or scale phase (the lifecycle weights cover startup → mature, but the ROI is highest where there's already operating volume)
+- Often PE-backed, growth-equity-backed, or post-acquisition
+
+**Trigger events** (why now):
+- New CEO, COO, or Chief of Staff in seat
+- Recent capital event (Series B+, PE recap, acquisition)
+- Board pushing for operational transparency
+- Preparing for fundraising, exit, or M&A
+- Post-merger integration
+
+**Buyer (who decides + signs)**:
+- COO or Chief of Staff — most often. The operator who runs cross-functional rhythms.
+- Operations-minded CEO — when the CEO is hands-on with operating cadence.
+- PE Operating Partner — when monitoring a portfolio of 5–20 companies that need a comparable maturity scoreboard.
+
+**Daily / weekly users (who logs in)**:
+- Leadership team (CEO, CFO, COO, functional VPs) — score practices, own initiatives, upload evidence.
+- Board members — quarterly governance view.
+
+**What they're replacing**:
+- Spreadsheet trackers + Notion docs + monthly status meetings
+- Static maturity frameworks (EOS, Rockefeller Habits) used by hand
+- Ad-hoc consulting engagements that don't compound
+
+**Industry**: agnostic, but ROI is highest where operating maturity is the moat (services, SaaS, professional services, healthcare, financial services) versus commodity / heavy-asset industries where supply chain dominates.
 
 ## How it helps
 1. **Replaces gut-feel prioritization with a weighted, lifecycle-aware ranking**, so leadership attention and capital go to practices that actually move *this* company's P&L *now*.
@@ -36,11 +62,11 @@ Five layers, each grounded in real data:
 | **Board** | A maturity scoreboard grounded in evidence + AI rubric grading + senior approval — harder to fake than self-reported KPIs, and visible quarter-over-quarter. |
 | **Investors / acquirers** | An operational due-diligence artifact: where the business is mature, where it's exposed, how fast it's improving. |
 
-## The first-use scenario
-A new CEO opens bds-OS on a Monday morning. They see:
+## Illustrative Monday-morning scenario
+A newly hired COO at a $40M PE-backed services company opens bds-OS. They see:
 - The 3 Phase-1 practices the system says matter most this week
 - Risk-floor breaches that need attention
 - The pending-approval queue waiting on them
 - Their team's progress on the active focus portfolio
 
-They spend 15 minutes there instead of 2 hours scrolling Slack and trying to remember what their COO mentioned last Friday. Then they go run the company — but with a compass, not a wishlist.
+They spend 15 minutes there instead of 2 hours reconstructing context from Slack. Then they go run the company — with a compass, not a wishlist. By Friday the leadership team has scored their owned areas, evidence is queued for AI grading, and the board has visibility into trajectory without the COO building a deck.

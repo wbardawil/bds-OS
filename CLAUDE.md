@@ -5,7 +5,7 @@ Context for any Claude Code session working in this repo. Read this first.
 ## What this is
 
 **BDS OS** — a P&L-driven operating maturity and capital allocation system. Backend
-for an app that helps a CEO/leadership team:
+for an app that helps a leadership team:
 
 1. Score 82 management practices across 8 areas on importance + competency.
 2. Compute an Operational Priority Index (OPI) per practice, weighted by lifecycle stage.
@@ -13,8 +13,7 @@ for an app that helps a CEO/leadership team:
 4. Track initiatives, grade evidence with AI, route score-change requests through approval.
 5. Surface executive / board / functional governance views.
 
-Primary first user: a friend stepping into a CEO role, using this as a Monday-morning
-management compass. See `docs/v1-plan.md`.
+See `docs/about.md` for the product summary, ICP, and value proposition.
 
 ## Repo layout
 
@@ -84,6 +83,11 @@ readable by any authenticated user.
 - **No comments** explaining what the code does — names should do that. Comments only
   for non-obvious *why*.
 - **Engines stay pure** — no Supabase imports under `src/engines/`.
+- **Validate front + back before adding logic**: before writing new edge functions,
+  migrations, or significant backend code, audit `apps/web/` (the Lovable frontend)
+  to check what's already implemented client-side. Flows likely already in Lovable:
+  signup, org creation, invitation send/accept, simple data CRUD via PostgREST.
+  Don't duplicate. If `apps/web/` is empty, ask the user to import Lovable first.
 
 ## Common commands
 

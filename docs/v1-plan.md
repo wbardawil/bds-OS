@@ -1,7 +1,9 @@
 # BDS OS — v1 Release Plan
 
-**Target user**: a friend stepping into a CEO role, using this as a Monday-morning
-management compass and ongoing monitoring tool.
+**Target user**: see `docs/about.md` for the ICP. Summary: COO, Chief of Staff,
+or operations-minded CEO at a $10M–$250M revenue company in growth or scale stage,
+typically post-capital-event (PE recap, Series B+, acquisition) or with a new
+operator in seat.
 
 **Active branch**: `claude/promote-assessments-P5G00`
 
