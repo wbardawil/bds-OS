@@ -22,6 +22,24 @@ export type UserRole = 'admin' | 'leader' | 'functional_lead';
 
 export type OPIPhase = 'proof' | 'structure' | 'scale_phase';
 
+export type AuditAction =
+  | 'create'
+  | 'update'
+  | 'delete'
+  | 'status_change'
+  | 'grade'
+  | 'approve'
+  | 'reject';
+
+export type AuditResourceType =
+  | 'round_response'
+  | 'opi_score'
+  | 'focus_portfolio'
+  | 'initiative'
+  | 'evidence'
+  | 'score_change_request'
+  | 'approval';
+
 // ─── Core Tables ─────────────────────────────────────────────────────────────
 
 export interface Organization {
@@ -268,5 +286,20 @@ export interface AdoptionMetric {
   decision_cycle_time_hours: number | null;
   escalations_per_month: number | null;
   measured_at: string;
+  created_at: string;
+}
+
+// ─── Audit Log ───────────────────────────────────────────────────────────────
+
+export interface AuditLog {
+  id: string;
+  organization_id: string;
+  user_id: string | null;
+  action: AuditAction;
+  resource_type: AuditResourceType;
+  resource_id: string;
+  before: Record<string, unknown> | null;
+  after: Record<string, unknown> | null;
+  metadata: Record<string, unknown> | null;
   created_at: string;
 }
