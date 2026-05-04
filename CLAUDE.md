@@ -107,7 +107,8 @@ npm run functions:serve           # supabase functions serve (local edge functio
   - Audit log migration (A1): done — `20260504000001_create_audit_log.sql`.
     Edge functions need to start writing entries on score-change approvals,
     evidence grading, initiative status transitions.
-  - Minimal CI gate (A4): not started.
+  - Minimal CI gate (A4): done — `.github/workflows/gate.yml` runs typecheck
+    and trufflehog secret scan on every PR to main.
 - Known backend gaps for v1.1+: round-over-round trends (placeholder in
   `src/engines/operating-debt.ts:122`), weekly digest, practice
   dependencies seed.
