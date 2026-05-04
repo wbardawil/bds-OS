@@ -103,12 +103,17 @@ npm run functions:serve           # supabase functions serve (local edge functio
   1. No team-invitation flow (backend gap)
   2. No "compass" landing page (Lovable gap)
   3. Onboarding / empty states / rubric tooltips missing (Lovable gap)
+- Pre-v1 hygiene from `docs/external-patterns-review.md`: audit log migration
+  + minimal CI gate, both pulled forward after auditing the gstack and gsd-2
+  imports on the `chore/import-gstack-gsd` branch.
 - Known backend gaps for v1.1+: round-over-round trends (placeholder in
-  `src/engines/operating-debt.ts:122`), audit log, weekly digest, practice
+  `src/engines/operating-debt.ts:122`), weekly digest, practice
   dependencies seed.
 
 ## When picking up work
 
-1. Read `docs/v1-plan.md` for the release plan and contract.
-2. `git log --oneline -20` on `claude/promote-assessments-P5G00` for recent context.
-3. Confirm with the user before doing anything destructive or visible (push, PR, comment).
+1. Read `docs/v1-plan.md` for the release plan and frontend contract.
+2. Read `docs/external-patterns-review.md` if touching CI, audit log, onboarding,
+   or auth — it captures decisions from the gstack/gsd-2 audit.
+3. `git log --oneline -20` on `claude/promote-assessments-P5G00` for recent context.
+4. Confirm with the user before doing anything destructive or visible (push, PR, comment).
