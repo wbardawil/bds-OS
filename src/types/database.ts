@@ -38,7 +38,8 @@ export type AuditResourceType =
   | 'initiative'
   | 'evidence'
   | 'score_change_request'
-  | 'approval';
+  | 'approval'
+  | 'invitation';
 
 // ─── Core Tables ─────────────────────────────────────────────────────────────
 
@@ -286,6 +287,20 @@ export interface AdoptionMetric {
   decision_cycle_time_hours: number | null;
   escalations_per_month: number | null;
   measured_at: string;
+  created_at: string;
+}
+
+// ─── Invitations ─────────────────────────────────────────────────────────────
+
+export interface Invitation {
+  id: string;
+  organization_id: string;
+  email: string;
+  role: UserRole;
+  token: string;
+  invited_by: string | null;
+  expires_at: string;
+  accepted_at: string | null;
   created_at: string;
 }
 

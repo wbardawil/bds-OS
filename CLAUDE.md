@@ -99,10 +99,11 @@ npm run functions:serve           # supabase functions serve (local edge functio
 - Backend: ~80% ready for v1. Engines, schema, seeds, edge functions all in place.
 - Frontend: built in Lovable, lives in `wbardawil/strategy-spark-86`, integration into
   `apps/web/` via `chore/integrate-lovable` branch is in progress.
-- Open v1 blockers tracked in `docs/v1-plan.md`:
-  1. No team-invitation flow (backend gap)
-  2. No "compass" landing page (Lovable gap)
-  3. Onboarding / empty states / rubric tooltips missing (Lovable gap)
+- v1 blocker status (full spec in `docs/v1-plan.md`):
+  1. Team-invitation flow: backend done (`invitations` table + `invite-user` and
+     `accept-invitation` edge functions). Frontend wiring still needed in Lovable.
+  2. "Compass" landing page: not started (Lovable).
+  3. Onboarding / empty states / rubric tooltips: not started (Lovable).
 - Pre-v1 hygiene from `docs/external-patterns-review.md`:
   - Audit log migration (A1): done — `20260504000001_create_audit_log.sql`.
     Edge functions need to start writing entries on score-change approvals,
