@@ -123,8 +123,11 @@ npm run functions:serve           # supabase functions serve (local edge functio
 
 1. Read `docs/how-it-works.md` for the architecture in plain English (what each
    piece does, how Lovable + Supabase + this repo connect, sync rules).
-2. Read `docs/v1-plan.md` for the release plan and frontend contract.
-3. Read `docs/external-patterns-review.md` if touching CI, audit log, onboarding,
+2. Read `docs/lovable-state.md` to understand the actual gap between what Lovable
+   shipped and what `bds-OS` describes — they are NOT in sync, and the strategic
+   reconciliation is deferred until after the 2026-05-05 demo.
+3. Read `docs/v1-plan.md` for the release plan and frontend contract.
+4. Read `docs/external-patterns-review.md` if touching CI, audit log, onboarding,
    or auth — it captures decisions from the gstack/gsd-2 audit.
-4. `git log --oneline -20` on `claude/promote-assessments-P5G00` for recent context.
-5. Confirm with the user before doing anything destructive or visible (push, PR, comment).
+5. `git log --oneline -20` on `claude/promote-assessments-P5G00` for recent context.
+6. Confirm with the user before doing anything destructive or visible (push, PR, comment).
