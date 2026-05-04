@@ -101,7 +101,8 @@ npm run functions:serve           # supabase functions serve (local edge functio
   `apps/web/` via `chore/integrate-lovable` branch is in progress.
 - v1 blocker status (full spec in `docs/v1-plan.md`):
   1. Team-invitation flow: backend done (`invitations` table + `invite-user` and
-     `accept-invitation` edge functions). Frontend wiring still needed in Lovable.
+     `accept-invitation` edge functions, with Resend email delivery on `invite-user`).
+     Frontend wiring still needed in Lovable.
   2. "Compass" landing page: not started (Lovable).
   3. Onboarding / empty states / rubric tooltips: not started (Lovable).
 - Pre-v1 hygiene from `docs/external-patterns-review.md`:
