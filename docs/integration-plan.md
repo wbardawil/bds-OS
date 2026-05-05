@@ -137,25 +137,30 @@ Adapter responsibilities:
 
 ## Roadmap (post-deadline-discovery, no firm dates)
 
-### M1 — Foundation specs (this repo, ~1 day) — **IN PROGRESS 2026-05-05**
-- Update `docs/lovable-state.md` with the practice / category data we now have
-- Write `src/adapters/lovable-jsonb-to-opi-input.ts` blueprint
-- Write per-table SQL migration blueprints for the new tables under `docs/blueprints/migrations/`
-- Write per-edge-function source blueprints under `docs/blueprints/functions/`
+### M1 — Foundation specs (this repo, ~1 day) — **DONE 2026-05-05**
+- Updated `docs/lovable-state.md` with the practice / category data we now have
+- Wrote `src/adapters/lovable-jsonb-to-opi-input.ts` (corrected to verified jsonb shape)
+- Wrote per-table SQL migration blueprints under `docs/blueprints/migrations/`
+- Wrote per-edge-function source blueprints under `docs/blueprints/functions/`
 
-### M2 — Schema landed in strategy-spark-86 (~half day)
-Claude opens a PR on `strategy-spark-86` that adds:
-1. Migration: `lifecycle_stage` enum + columns on `companies`
-2. Migration: `lifecycle_weights` table + seed (4 rows)
-3. Migration: `practice_metadata` table (seed deferred — content lift)
-4. Migration: `maturity_rubrics` table (seed deferred — content lift)
-5. Migration: `mode` column on `evaluation_rounds`
+### M2 — Schema landed in strategy-spark-86 (~half day) — **PUSHED 2026-05-05**
+Migrations 20260505000001–000005 on `claude/integrate-frontend-backend-kVV84`:
+1. `lifecycle_stage` enum + columns on `companies`
+2. `lifecycle_weights` table + seed (4 rows)
+3. `practice_metadata` table (seed deferred to M3 placeholder)
+4. `maturity_rubrics` table (seed deferred — content lift)
+5. `mode` column on `evaluation_rounds`
 
-### M3 — OPI computation (~1 day)
+### M3 — OPI computation backend (~1 day) — **IN PROGRESS 2026-05-05**
 - Migration: `opi_scores` table
-- Edge function: `compute-opi` (ported from blueprint)
-- Frontend: "OPI view" tab on the round results screen
-- Test: a full round → compute → see Phase 1/2/3 grouping with risk-floor flags
+- Migration: `practice_metadata` PLACEHOLDER seed (75 rows, neutral midpoints)
+- Vendored shared modules under `supabase/functions/_shared/`
+- Edge function: `compute-opi`
+- Edge function: `determine-lifecycle` (needed to set `companies.lifecycle_stage` before compute-opi works)
+- Frontend OPI tab deferred to M3.5
+
+### M3.5 — OPI view in UI (~half day)
+- New tab on the round results screen showing Phase 1/2/3 grouping with risk-floor flags
 
 ### M4 — Focus portfolio (~1 day)
 - Migration: `focus_portfolios` and `initiatives` tables
@@ -195,6 +200,6 @@ Claude opens a PR on `strategy-spark-86` that adds:
 1. **Industry benchmarks** (Lovable already has these): do we want to feed bds-OS's OPI scores into the same benchmark mechanism, or keep benchmarks gap-only?
 2. **Round-over-round trends** (Lovable has these for gap; bds-OS has placeholder for OPI trends): unify or keep separate?
 3. **Existing `invite-member` flow**: keep it for the simple "add to company" case, and add `invitations` for cross-domain invitations? Or replace?
-4. **Practice metadata content**: who provides the P&L impact / speed / dependency / risk_floor values for Lovable's 75 questions? bds-OS's seeds map to its own 82, not Lovable's 75. Probably needs human curation by the product owner.
+4. **Practice metadata content**: who provides the P&L impact / speed / dependency / risk_floor values for Lovable's 75 questions? bds-OS's seeds map to its own 82, not Lovable's 75. Probably needs human curation by the product owner. *(M3 ships placeholder midpoints (3,3,3,false) so the pipeline can run end-to-end. Replace before showing OPI to users.)*
 5. **Maturity rubrics content** (5 levels × 75 questions = 375 rubric entries): same — bds-OS's are written for its own 82. Big content lift to author for Lovable's 75.
-6. **`category_scores` jsonb shape**: assumed `{category: {question_id: {importance, competency}}}` in the adapter. Verify against `submit-round-response` in M2.
+6. ~~`category_scores` jsonb shape~~ **Resolved 2026-05-05**: shape is `{category_key: {competencyAvg, importanceAvg, gap, responses: [{questionId, competency, importance}]}}`. Built by `src/pages/RoundAssessment.tsx`. Adapter rewritten to pull from `responses[]`.

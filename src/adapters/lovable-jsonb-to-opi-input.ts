@@ -3,23 +3,28 @@
 // Lovable stores per-respondent scores in a free-form jsonb column. The OPI
 // engine wants flat per-question records merged with practice_metadata.
 //
-// ASSUMED INPUT SHAPE (verify against submit-round-response source in M2):
+// VERIFIED INPUT SHAPE (from strategy-spark-86/src/pages/RoundAssessment.tsx,
+// confirmed 2026-05-05):
 //
 //   {
 //     "<category_key>": {
-//       "<question_id>": { "importance": <1..5>, "competency": <1..5> },
-//       ...
+//       "competencyAvg": number,
+//       "importanceAvg": number,
+//       "gap": number,
+//       "responses": [
+//         { "questionId": "<id>", "competency": <1..5>, "importance": <1..5> },
+//         ...
+//       ]
 //     },
 //     ...
 //   }
 //
-// Falls back to a flat shape:
+// We pull from `responses` only. The per-category aggregates (competencyAvg,
+// importanceAvg, gap) are ignored because the OPI engine recomputes everything
+// per-question using practice_metadata weights.
 //
-//   { "<question_id>": { "importance": <1..5>, "competency": <1..5> } }
-//
-// Aggregation across respondents (averaging) lives here too because rounds in
-// Lovable allow many respondents per round but the OPI engine wants one input
-// per question per round.
+// Note: questionId is camelCase in jsonb; we expose snake_case `question_id`
+// in our internal types since that's the column name everywhere downstream.
 
 import type { OPIInput } from '../types/opi.js';
 
@@ -43,42 +48,34 @@ type CategoryScores = Record<string, unknown>;
 
 /**
  * Flatten one respondent's category_scores jsonb into per-question entries.
- * Tolerates both the nested {category: {question: {...}}} shape and the flat
- * {question: {...}} shape. Throws on shapes it doesn't recognize.
+ * Reads from each category's `responses[]` array. Throws if a response item
+ * is missing the expected questionId/competency/importance fields.
  */
 export function flattenCategoryScores(jsonb: CategoryScores): AggregatedScore[] {
   const out: AggregatedScore[] = [];
-  for (const [key, value] of Object.entries(jsonb)) {
-    if (value === null || typeof value !== 'object') continue;
-
-    if (looksLikeScore(value)) {
-      out.push({ question_id: key, ...readScore(value) });
-      continue;
-    }
-
-    for (const [qid, qval] of Object.entries(value as Record<string, unknown>)) {
-      if (!looksLikeScore(qval)) {
-        throw new Error(`Unrecognized score shape at ${key}.${qid}`);
+  for (const [, catData] of Object.entries(jsonb)) {
+    if (!catData || typeof catData !== 'object') continue;
+    const responses = (catData as { responses?: unknown }).responses;
+    if (!Array.isArray(responses)) continue;
+    for (const r of responses as Array<Record<string, unknown>>) {
+      if (typeof r?.questionId !== 'string'
+        || typeof r?.competency !== 'number'
+        || typeof r?.importance !== 'number') {
+        throw new Error(`Invalid response shape: ${JSON.stringify(r)}`);
       }
-      out.push({ question_id: qid, ...readScore(qval) });
+      out.push({
+        question_id: r.questionId,
+        importance: r.importance,
+        competency: r.competency,
+      });
     }
   }
   return out;
 }
 
-function looksLikeScore(v: unknown): v is { importance: number; competency: number } {
-  if (v === null || typeof v !== 'object') return false;
-  const o = v as Record<string, unknown>;
-  return typeof o.importance === 'number' && typeof o.competency === 'number';
-}
-
-function readScore(v: unknown): { importance: number; competency: number } {
-  const o = v as { importance: number; competency: number };
-  return { importance: o.importance, competency: o.competency };
-}
-
 /**
- * Average per-question scores across many respondents.
+ * Average per-question scores across many respondents. Lovable allows many
+ * respondents per round; the OPI engine wants one input per question per round.
  */
 export function aggregateRespondents(
   respondentScores: AggregatedScore[][],
@@ -102,18 +99,9 @@ export function aggregateRespondents(
 
 /**
  * Merge aggregated per-question scores with practice_metadata to produce
- * inputs for the OPI engine.
- *
- * The OPI engine in src/engines/opi.ts uses a numeric `practice_id` field;
- * Lovable's questions are keyed by string. We assign sequential numeric ids
- * here and return a Map so the caller can rehydrate question_ids when
- * persisting opi_scores.
- *
- * Returns:
- *   - inputs: OPIInput[] for the engine
- *   - idMap:  numeric practice_id -> Lovable question_id
- *   - missingMetadata: question_ids the round mentioned but practice_metadata
- *                      doesn't have (skipped, surfaced for warning)
+ * inputs for the OPI engine. The engine uses a numeric `practice_id`; we
+ * assign sequential ids and return a Map so the caller can rehydrate the
+ * Lovable string `question_id` when persisting `opi_scores`.
  */
 export function toOPIInputs(
   aggregated: AggregatedScore[],
