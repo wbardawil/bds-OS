@@ -1,6 +1,6 @@
-# Beta Pilot Plan — End-to-End for the Fund CEO + Portfolio
+# Beta Pilot Plan — 15 Days, End-to-End
 
-**Status**: active. **Scope**: assessment → monitoring → benchmarking → visualisation → chatting → initiative → governance, all working for two real beta customers (the fund and its portfolio companies).
+**Status**: active. **Schedule**: 15 days from kickoff to beta launch. **Scope**: all 7 product dimensions functional for two real beta customers with the architecture done right.
 
 **Beta customers (real, not hypothetical)**:
 1. **The fund** — primary beta, the fund CEO operates here daily
@@ -9,161 +9,219 @@
 
 The fund CEO is admin across all three. Each portfolio company has its own leadership team scoring its own assessment.
 
-**Honest schedule**: 9–10 days for end-to-end production quality across all seven product dimensions. The original "7 days" was unrealistic given the full scope. We do not ship pieces that don't work — every dimension is functional or it doesn't go to the beta.
+**Architecture locked in `docs/architecture.md`**:
+- Own Supabase project (not Lovable Cloud)
+- Single monorepo with Lovable's app under `apps/web/`
+- GitHub Actions CI/CD pipeline
+- Sentry + Slack alerts for ops
 
 ---
 
-## What ships end-to-end (the seven dimensions)
+## What ships end-to-end (15-day v1)
 
-For all three companies, every dimension below is **MVP-functional**, not stubbed:
-
-| # | Dimension | What ships in v1 | What's deferred to v1.1+ |
+| # | Dimension | v1 capability | v1.1 follow-up |
 |---|---|---|---|
-| 1 | **Assessment** | 8 pillars × ~5 practices, importance + competency scoring, per-company question sets cloned from a template, leadership team can score | Maturity rubrics with 5 levels per practice (post-pilot, content-heavy) |
-| 2 | **Monitoring** | Manual KPI entry per pillar, threshold-based color coding (red/yellow/green), live tile updates via Supabase Realtime | Native connectors (Stripe, CRM, EHR, SIS), generic webhook, Slack/email alerts |
-| 3 | **Benchmarking** | Cross-company portfolio rollup view for the fund CEO (fund + all portfolio companies side-by-side, summary scores per pillar), trend over rounds | Cross-tenant industry benchmarks (anonymised averages across all customers) |
-| 4 | **Visualisation** | Number tiles, sparklines, radar (assessment), bar charts (pillar scores), gap charts | Drag-and-drop dashboard builder; pinning chat results to dashboard |
-| 5 | **Chatting** | Text-grounded Q&A (Claude API): ask any question about your data, get a synthesised answer citing real values | Chart rendering inside chat (v1.1, ~3 days extra after v1) |
-| 6 | **Initiative** | Focus portfolio (top N practices by OPI), each becomes an initiative with a 3-status workflow (planned / in_progress / done) | Full 7-status workflow with evidence loop and AI grading (post-pilot M5) |
-| 7 | **Governance** | Three views — executive (priorities + alerts), board (pillar maturity + trajectory), functional (per-pillar drill-down for owners) | Action-coupled alerts, escalation policies, audit-log UI |
+| 1 | **Assessment** | 8 universal pillars × ~5 practices, dual-slider scoring, per-company question sets, **maturity rubrics for top 5 practices per pillar (~40 rubrics)** | Rubrics for the long-tail practices, full evidence-loop approval queue |
+| 2 | **Monitoring** | Manual KPI entry, threshold colour-coding, live tile updates via Realtime, alert banners | Generic webhook ingest, Slack/email digest, native connectors |
+| 3 | **Benchmarking** | Cross-company portfolio rollup for fund CEO, internal trend over rounds | Cross-tenant industry benchmarks (anonymised averages) |
+| 4 | **Visualisation** | Number tiles, sparklines, radar (assessment), bar charts (pillar scores), **inline charts in chat** | Save chart from chat → mosaic, drag-drop reorder, NL-to-SQL queries |
+| 5 | **Chatting** | Text-grounded Q&A with **source citations** + inline chart rendering (Julius-lite) | Pin-to-dashboard, multi-company queries, conversation memory across sessions |
+| 6 | **Initiative** | 3-status kanban (Planned / In Progress / Done), evidence upload, AI rubric grading | 7-status workflow, formal approval queue, escalation paths |
+| 7 | **Governance** | One combined view adapting to user role + audit log + decisions table populated | Three separated views (executive / board / functional), decision-log dedicated UI, action-coupled alerts |
 
 ---
 
-## Non-negotiable principles
+## Non-negotiable principles (stress-test fixes baked in)
 
-- **Every dimension is functional end-to-end** before the beta opens. No half-built features.
-- **The fund CEO can walk the entire journey** from sign-up to chatting on day 1 of access.
-- **Each portfolio company's leadership** can independently complete an assessment and see their own results.
-- **The fund CEO sees the rollup** — all companies in one view, drilldown to any.
-- **Customisation works** — at minimum: rename pillar labels, edit practice text, add/remove KPIs, customise thresholds.
-- **Feedback loop is built in** — beta customers have a real mechanism to tell us what's broken or missing.
+- **Source-cited chat** — every numeric claim in chat output references its underlying data row. No hallucinated numbers reach users.
+- **Maturity rubrics for top practices** — 5 levels per top-5 practices per pillar = ~40 rubrics. Without these the assessment is sliders without a standard. Hand-authored content during pre-pilot.
+- **Framework heritage cited in UI** — "Synthesis of Baldrige + EFQM + Balanced Scorecard" visible to users so they don't dismiss it as house-consultant material.
+- **Day-1 kickstart** — empty-state isn't empty. Each new company gets pre-populated KPIs with target values, a 5-question kickstart questionnaire (not 40), and a suggested first-30-days focus portfolio.
+- **CEO not exempt from evidence loop** — the operator's score changes go through the same AI rubric grade + senior approval as the team's. Built in from day 1.
+- **Feedback loop functional from day 1** — in-app feedback widget, weekly beta call, friction log shared doc, Sean Ellis PMF survey at day 30.
 
 ---
 
-## 9-day schedule
+## 15-day schedule (parallel-friendly)
 
-Each day has clear ownership: **Me** (writing specs / engine code / docs in `bds-OS`), **You** (pasting prompts into Lovable, customisations, testing), **Lovable** (implementing UI / migrations / edge functions on Lovable Cloud).
+Pre-pilot architecture work runs **in parallel** with content/spec authoring. The pilot itself is 13 days inside that 15-day envelope.
 
-### Day 1 — Foundation specs (Me)
-- Write `docs/lovable-migration-spec.md` containing:
-  - SQL for new tables: `universal_pillars` (seeded 8), `customer_pillars`, `question_sets`, `practices`, `metric_sets`, `metrics`, `metric_values`, `dashboards`, `widgets`, `alerts`, `chat_messages`
-  - Refactor instructions: load practices/categories from DB instead of hardcoded `src/data/questions.ts`
-  - Backward compatibility: existing companies default to "no template selected"
-- Write professional-services / fund template in `docs/industry-templates.md`
-- Write `docs/chat-design.md` — chat architecture, prompt structure, edge function spec
-- Commit + push
+### Days 1–2 — Architecture setup + foundation specs (parallel)
 
-### Day 2 — Lovable applies the foundation (You + Lovable)
-- Paste the migration spec into Lovable. Lovable applies the migrations. Existing data preserved.
-- Paste the question-loading refactor spec. Lovable refactors `src/data/questions.ts` to read from DB.
-- Sanity-check: existing flows still work. Existing companies see their old questions.
-- Buffer for Lovable iteration (this step may take 1–2 days; built into schedule)
+**You** (browser tasks, ~1 hour total):
+- Create your own Supabase project (Pro tier, US East). Get URL, anon key, service role key.
+- In Lovable: change GitHub target to push into `wbardawil/bds-OS` under `apps/web/`. (If subdirectory pushing is unsupported, fall back to scheduled subtree-pull from `strategy-spark-86`.)
+- Create accounts: Sentry (Developer free), Vercel (Hobby free), Slack workspace or Discord with `#ops-alerts` channel + webhook URL.
+- Configure GitHub Actions secrets: Supabase service role key, Vercel deploy hook, Anthropic API key, Resend API key, Sentry DSN, Slack webhook URL.
 
-### Day 3 — Templates + customisation surfaces (Lovable, with my specs)
-- Paste seed-data prompts for hospital, university, professional-services-fund templates.
-- Paste UI prompts for: template picker on company creation; pillar customise page (rename, merge, split, hide, add); practice customise page (edit, drop, add); KPI customise page (edit, drop, add, set thresholds, set source).
-- Verify: a fresh company can pick a template and customise.
+**Me** (autonomous):
+- Write the **SQL migration** that applies the framework tables on top of Lovable's existing schema (`universal_pillars`, `customer_pillars`, `templates`, `metrics`, `metric_values`, `widgets`, `dashboards`, `alerts`, `chat_messages`, `decisions`, `feedback`, `pmf_responses`, `maturity_rubrics`).
+- Write the **professional-services / fund template** in `docs/industry-templates.md`.
+- Write **`.github/workflows/deploy.yml`** — typecheck → migration → edge function deploy → Vercel deploy → Slack notify.
+- Spec the **Sentry integration** (web SDK + edge function SDK) and **Slack/Discord webhook integration** with `audit_log` triggers.
+- Spec the **`chat-with-data` edge function** including source-citation enforcement.
 
-### Day 4 — Three pilot companies created + customised (You)
-- Create **Fund X** (the fund) → pick fund template → review/edit practices and KPIs (~30 min).
+### Day 3 — Lovable applies foundation, monorepo settles
+
+**You + Lovable**:
+- Apply the SQL migration to your new Supabase project (paste into SQL editor or run via CLI from your codespace).
+- Update Lovable's env vars to point at the new Supabase project.
+- Verify Lovable's existing flows still work (public assessment, dashboard, etc.) on the new backend.
+- If monorepo: confirm Lovable is now pushing into `apps/web/`.
+
+### Day 4 — Refactor questions to load from DB
+
+**You + Lovable**:
+- Paste the refactor spec. Lovable updates `src/data/questions.ts` to load practices from the new `practices` table instead of hardcoded.
+- Backward compatibility: existing data preserved.
+- Verify: existing companies still see their old questions; new companies will pick from templates.
+
+### Day 5 — Author the templates content + maturity rubrics
+
+**Me** (autonomous):
+- Finalise hospital, university, fund templates with full practice + KPI lists in `docs/industry-templates.md`.
+- Author **maturity rubrics for top 5 practices per pillar** for each template = 40 × 5 = 200 rubric entries × 3 templates = ~600 lines of structured rubric content.
+- Generate seed SQL for the templates + rubrics.
+
+**You + Lovable**:
+- Paste the seed SQL into Supabase. Verify templates and rubrics are loaded.
+
+### Day 6 — Three pilot companies created + customised
+
+**You** (~1.5 hours):
+- Create **Fund X** → pick fund template → review/edit practices and KPIs (~30 min).
 - Create **Hospital Y** → pick hospital template → review/edit (~30 min).
 - Create **University Z** → pick university template → review/edit (~30 min).
 - Configure user roles: fund CEO is owner of all three; hospital admin is owner of Hospital Y; university admin is owner of University Z.
 
-### Day 5 — Monitoring + visualisation (Me + Lovable)
-- I deliver specs for: control tower home page (tile grid, configurable per company), threshold-based colour coding, manual KPI entry form.
-- Lovable implements. You verify each company's control tower renders with the seeded KPIs.
-- I deliver spec for the **Portfolio view** (fund-CEO-only): list of all companies the user owns/admins, summary score per company, drill-down link.
-- Lovable implements. You verify fund CEO sees all three companies in one view.
+### Days 7–8 — Monitoring + visualisation surfaces
 
-### Day 6 — Chat + initiative + governance (Me + Lovable)
-- I deliver `chat-with-data` edge function source. Lovable implements + adds chat UI (textbox always visible on control tower).
-- I deliver Focus Portfolio + Initiatives spec (3-status workflow, simplified from the 7-status v2 design). Lovable implements.
-- I deliver Governance views spec (executive / board / functional layouts using existing data). Lovable implements.
-- You verify every surface renders for each company.
+**Me** (specs):
+- Control Tower home page layout spec (hero KPI tiles, pillar radar, pillar status strip, activity stream).
+- Manual KPI entry form spec with threshold colour-coding.
+- Portfolio view spec (fund-CEO-only, lists all owned companies with summary tiles).
+- Pillar drill-down spec.
 
-### Day 7 — KPI population + first assessments (You + leadership teams)
-- For each company, enter the initial KPI values manually (~30 min × 3 = 1.5 hours). Triggers thresholds; live tiles colour-code.
-- Send invitations to each company's leadership team.
-- Each leader logs in and completes their assessment for their company. Real `round_responses` populated.
+**You + Lovable**:
+- Lovable implements each surface from the specs.
+- You verify each company's Control Tower renders with seeded KPIs.
+- You verify the Portfolio view shows all three companies side-by-side.
+
+### Days 9–10 — Chat + charts (the wow)
+
+**Me** (specs + edge function source):
+- `chat-with-data` edge function source code (Anthropic API integration, structured prompt, source-citation enforcement, optional `chart_spec` in response).
+- Chat UI spec (always-visible panel, multi-turn, voice input, citation rendering, chart rendering via Recharts).
+
+**You + Lovable**:
+- Lovable implements the chat UI + integrates the edge function.
+- You verify chat answers a real question for each company with real data.
+- You verify charts render inline when the question implies a metric.
+- You verify citations are clickable and resolve to source rows.
+
+### Day 11 — Initiatives + governance
+
+**Me** (specs):
+- Initiative kanban spec (3 columns, drag-drop, evidence upload affordance, AI grade card).
+- Combined governance view spec (role-aware: executive sees priorities + alerts; board sees pillar maturity trajectory; functional sees their pillar's practices).
+- Audit log writes for all state changes (already partially designed).
+
+**You + Lovable**:
+- Lovable implements both surfaces.
+- You verify per-company workflows work (create initiative, upload evidence, grade, change status, see in governance).
+
+### Day 12 — KPI population + first assessments
+
+**You + leadership teams** (~3 hours total):
+- Enter initial KPI values for each company manually (~30 min × 3).
+- Send invitations to each company's leadership team via in-platform invitation flow.
+- Each leader logs in and completes their assessment for their company. `round_responses` populated.
 - Trigger OPI computation per company. Focus portfolios materialised.
 
-### Day 8 — End-to-end smoke test (You + Me)
-- You walk every dimension for every company:
+### Day 13 — End-to-end smoke test
+
+**You + Me**:
+- Walk every dimension for every company:
   - Sign-up + log-in works
-  - Assessment scoring works
+  - Assessment scoring works (with rubrics visible per practice)
   - KPIs render with thresholds
-  - Portfolio view shows all three
-  - Drill-down into each company works
-  - Chat answers a real question for each company with real data
-  - Focus portfolio surfaces sensible practices
-  - Initiatives show
-  - Each governance view renders
-- Capture issues in a shared friction log.
-- I fix or spec fixes for any breaks.
-- Lovable iterates on UI fixes.
+  - Portfolio view shows all three companies
+  - Drill-down works
+  - Chat answers real questions with source citations and inline charts
+  - Initiative kanban works
+  - Combined governance view renders for each role
+  - Feedback widget submits successfully
+- Capture issues in friction log. Triage and fix critical breaks.
 
-### Day 9 — Beta launch (You)
-- Final pre-flight: walk each company once more end-to-end.
+### Day 14 — Polish + final rubric expansion + documentation pass
+
+- Fix issues from the smoke test.
+- Author additional maturity rubrics if time allows (long-tail practices).
+- Final docs pass: update `docs/coherence-mece.md` to reflect what shipped, update `docs/integration-plan.md` to show v1.1 work moving forward.
+- Smoke test again post-fixes.
+
+### Day 15 — Beta launch
+
+- Final pre-flight (5-min walkthrough of every surface for every company).
 - Invitations to the actual fund CEO + each portfolio CEO + each portfolio's leadership team.
-- 15-minute onboarding video / call for each beta team.
-- Beta is live.
+- 15-minute onboarding call / video for each beta team.
+- Beta is **live**.
 
-### Day 10+ — Operating cadence (You + product-fit feedback loop)
-See "Product-fit feedback loop" below.
+### Day 16+ — Operating cadence + product-fit feedback loop
+
+(see "Product-fit feedback loop" below)
+
+---
+
+## Coverage check — all 7 dimensions × 3 companies
+
+| | Fund | Hospital | University |
+|---|---|---|---|
+| Assessment (with top-5 rubrics) | ✅ Day 12 | ✅ Day 12 | ✅ Day 12 |
+| Monitoring (manual KPIs + thresholds) | ✅ Day 12 | ✅ Day 12 | ✅ Day 12 |
+| Benchmarking (portfolio rollup) | ✅ Day 8 | ✅ (visible from fund's portfolio) | ✅ |
+| Visualisation (tiles + radar + chat charts) | ✅ Day 10 | ✅ Day 10 | ✅ Day 10 |
+| Chatting (Julius-lite + citations) | ✅ Day 10 | ✅ Day 10 | ✅ Day 10 |
+| Initiative (3-status kanban) | ✅ Day 11 | ✅ Day 11 | ✅ Day 11 |
+| Governance (combined view + audit log) | ✅ Day 11 | ✅ Day 11 | ✅ Day 11 |
+
+All 7 dimensions × 3 companies, functional by Day 13 (smoke test), live by Day 15.
 
 ---
 
 ## Product-fit feedback loop (built in from day 1)
 
-Real beta customers, real feedback. Without this loop we ship blind.
-
-| Channel | Cadence | What we capture | Who acts |
+| Channel | Cadence | What we capture | Action owner |
 |---|---|---|---|
-| **In-app feedback widget** | Continuous — a button on every screen → row in `feedback` table tagged by screen + user + timestamp + free-text | Granular usability + missing-feature feedback | Reviewed daily during beta, weekly thereafter |
+| **In-app feedback widget** | Continuous — button on every screen → row in `feedback` table tagged by screen + user + timestamp + free-text | Granular usability + missing-feature feedback | Reviewed daily during beta, weekly thereafter |
 | **Weekly 30-min beta call** with the fund CEO | Weekly Mondays from beta start | Strategic / "would I keep paying" questions | Decisions feed back into the next week's build |
-| **Friction log** (shared doc) | Continuous, edited by beta team between calls | Issues that come up between weekly calls | Triaged in weekly call |
-| **Usage telemetry** | Passive — Lovable Cloud writes to its analytics; we surface a simple "screens visited" report | Where users go, where they drop off | Reviewed weekly to find the dropoff cliffs |
+| **Friction log** (shared doc, not in platform) | Continuous, edited by beta team between calls | Issues that come up between weekly calls | Triaged in weekly call |
+| **Usage telemetry** | Passive — Vercel + Supabase analytics surfaced in `/admin` | Where users go, where they drop off | Reviewed weekly to find dropoff cliffs |
 | **Sean Ellis PMF survey** | At day 30, again at day 90 | "How would you feel if you could no longer use the platform?" — % "Very disappointed" is the PMF anchor | Determines the v2 priorities |
 
-The `feedback` table is part of the migration in day 1. The PMF survey is a Lovable form that posts to a `pmf_responses` table. The friction log is a shared doc (Notion / Google Doc) — not in the platform.
+The `feedback` and `pmf_responses` tables are part of Day 1's SQL migration. The friction log is a shared Notion or Google Doc, not in the platform.
 
 ---
 
-## Coverage check — does this hit all 7 dimensions for all 3 companies?
-
-| | Fund | Hospital | University |
-|---|---|---|---|
-| Assessment | ✅ Day 7 | ✅ Day 7 | ✅ Day 7 |
-| Monitoring | ✅ Day 7 | ✅ Day 7 | ✅ Day 7 |
-| Benchmarking | ✅ Day 5 (portfolio view) | ✅ (visible from fund's portfolio view) | ✅ (same) |
-| Visualisation | ✅ Day 5 | ✅ Day 5 | ✅ Day 5 |
-| Chatting | ✅ Day 6 | ✅ Day 6 | ✅ Day 6 |
-| Initiative | ✅ Day 6 | ✅ Day 6 | ✅ Day 6 |
-| Governance | ✅ Day 6 | ✅ Day 6 | ✅ Day 6 |
-
-All 7 dimensions × 3 companies × functional by day 8 (smoke test) and live by day 9.
-
----
-
-## What can slip the schedule (real risks)
+## Risks and mitigations
 
 | Risk | Probability | Mitigation |
 |---|---|---|
-| Lovable's Day 2 refactor (questions from DB) takes 2 days instead of 1 | High | Schedule already buffers this; if it slips into day 3, push everything by 1 day |
-| Chat edge function quality issues (Claude returns wrong format / inconsistent) | Medium | Strict prompt template with tested examples; fall back to "I couldn't answer that" gracefully |
-| Customising 3 templates well takes longer than estimated | Medium | Day 4 has a full day; if it bleeds into day 5, run customisation in parallel with monitoring spec work |
-| Threshold UI is harder than estimated in Lovable | Low | Default thresholds seeded so customisation is optional |
-| Beta customers are slow to complete their assessments on day 7 | Medium | Send invitations day 6 evening with clear "please complete by day 8" ask |
+| Lovable's Day 4 refactor (load questions from DB) takes 2 days instead of 1 | High | Schedule has buffer in Day 5; Day 4 prep specs are minimal so iteration is fast |
+| Chat edge function quality issues (Claude returns hallucinated numbers despite citation enforcement) | Medium | Strict validation in edge function: any numeric claim not present in supplied context is filtered; tested with adversarial prompts pre-launch |
+| Maturity rubric authoring slips (200+ rubric entries per template × 3 templates is significant content) | Medium | Day 5 dedicated to authoring; if it slips into Day 6, I can author in parallel during Day 6's Lovable work |
+| Beta customers don't complete their assessments by Day 12 | Medium | Send invitations Day 11 evening with "please complete by Day 13" deadline; I draft a friendly reminder email template |
+| Architecture pre-work blocks (Supabase setup hits a hiccup) | Low | Days 1–2 are buffer-friendly; if Supabase setup takes 3 days, push everything by 1 day |
+| Lovable can't push to subdirectory of monorepo | Medium | Fallback: keep `strategy-spark-86` separate; periodic git-subtree-pull into `apps/web/` of `bds-OS`. Functionally equivalent for our purposes; minor friction. |
 
-If two or more of these hit, day 9 launch becomes day 10 or 11. Not catastrophic — beta customers care more about quality than the specific date.
+If two or more risks fire, Day 15 launch becomes Day 16 or 17. Acceptable — beta customers care about quality more than the specific date.
 
 ---
 
 ## What this plan supersedes
 
-- `docs/v1-plan.md` — pre-Lovable-discovery, obsolete
-- `docs/integration-plan.md` — covers the longer roadmap; for v1 pilot, **this plan is authoritative**
-- The earlier "7-day pilot" framing — replaced by this 9–10 day end-to-end version
+- The 9-day version of this plan (committed earlier today) — replaced by this 15-day version that includes architecture pre-work + chat with charts + maturity rubrics + source-citing.
+- `docs/v1-plan.md` — pre-Lovable-discovery, obsolete.
+- `docs/integration-plan.md` — covers the longer roadmap; for v1 pilot, **this plan is authoritative**.
 
-When this plan is executed, update `docs/coherence-mece.md` and `docs/integration-plan.md` to reflect what shipped. Do not silently let docs drift.
+When this plan is executed, update `docs/coherence-mece.md` and `docs/integration-plan.md` to reflect what shipped on Day 14. Do not silently let docs drift.

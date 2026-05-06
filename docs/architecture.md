@@ -11,7 +11,7 @@ This is the **canonical architecture reference**. When in doubt about how the sy
 | # | Decision | Rationale |
 |---|---|---|
 | **F1** | **Own Supabase project** (not Lovable Cloud) | Required for Claude Code ops, CLI deploys, full observability, no vendor lock-in. ~$25/mo. |
-| **F2** | **Single monorepo** at `wbardawil/bds-OS`. Lovable's frontend lives under `apps/web/` and Lovable is reconfigured to push to that subdirectory. | One PR per change touches both layers; one CI pipeline; one source of truth. |
+| **F2** | **Two repos with one-way sync into `bds-OS`**. Lovable continues to push the frontend to `wbardawil/strategy-spark-86` (its native target — Lovable does not support pushing to a subdirectory of an existing repo). A GitHub Action mirrors `strategy-spark-86` into `wbardawil/bds-OS` at `apps/web/` on every push. CI deploys from `bds-OS`. | Closest to monorepo we can achieve given Lovable's GitHub integration constraints. Backend changes via Claude Code direct; frontend changes via Lovable's prompt loop, auto-mirrored. |
 | **F3** | **CI/CD + Sentry + Slack/Discord alerts in v1** | Production observability is non-negotiable; you must be able to know what's happening from a phone. |
 
 ---
@@ -371,8 +371,8 @@ Current state:
 
 Target state:
 - Own Supabase project running our combined schema
-- Single monorepo at `wbardawil/bds-OS` with `apps/web/` containing the Lovable app
-- GitHub Actions CI/CD pipeline deploying to Supabase + Vercel
+- `wbardawil/bds-OS` is the deployment source; `apps/web/` is auto-mirrored from `strategy-spark-86` via a GitHub Action triggered on push to `strategy-spark-86`'s main
+- GitHub Actions CI/CD pipeline deploying to Supabase + Vercel from `bds-OS`
 - Sentry + Slack alerts wired
 
 ### Pre-pilot architecture work (~3 days, parallel-friendly)
@@ -383,12 +383,13 @@ Target state:
 - Me: write SQL migration applying our framework tables on top of Lovable's existing schema (`universal_pillars`, `customer_pillars`, `templates`, `metrics`, `metric_values`, etc.). Generate from `docs/framework.md` and `docs/industry-templates.md`.
 - You: apply the migration via the Supabase CLI from your codespace (or paste into Supabase SQL editor).
 
-**Day -2** — Lovable points to new Supabase, GitHub Actions:
+**Day -2** — Lovable points to new Supabase, GitHub Actions, repo-mirror:
 - You: in Lovable, update env vars (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`) to point at the new project.
 - You: in Lovable, disconnect from Lovable Cloud (or accept the Lovable Cloud project will go unused).
-- Me: write `deploy.yml` GitHub Action — typecheck, test, supabase db push, supabase functions deploy, vercel deploy.
-- You: configure GitHub Actions secrets (Supabase service role key, Vercel deploy hook, Anthropic API key).
-- You: connect the GitHub repo to Vercel (one-time, via Vercel dashboard).
+- Me: write `deploy.yml` GitHub Action — typecheck, test, supabase db push, supabase functions deploy, vercel deploy. Triggered on push to `bds-OS` main.
+- Me: write `mirror-frontend.yml` GitHub Action — on push to `strategy-spark-86` main (or scheduled every 5 min), sync the tree into `bds-OS/apps/web/` via `git subtree split + push` or equivalent. Commits land on a `chore/sync-lovable` branch and auto-merge to main if CI passes.
+- You: configure GitHub Actions secrets (Supabase service role key, Vercel deploy hook, Anthropic API key, `strategy-spark-86` read access PAT for the mirror action).
+- You: connect `bds-OS` to Vercel (one-time, via Vercel dashboard) — Vercel deploys from `apps/web/`.
 
 **Day -1** — Sentry + alerts:
 - Me: spec the Sentry integration (web SDK + edge function SDK).
