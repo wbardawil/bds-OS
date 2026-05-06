@@ -92,9 +92,125 @@ Plus **management layer**:
 
 ---
 
-## Role-aware UI — small schema add for v1
+## Inter-role workflows — the C-suite as a system, not isolated roles
 
-Today the design has a single dashboard layout per company. To serve all roles properly, default tiles must adapt to role.
+The platform doesn't replace meetings; it structures the **rhythm** and provides the **shared source of truth** for every recurring conversation between C-levels.
+
+| Cadence | Meeting | Platform role | Surfaces used |
+|---|---|---|---|
+| **Daily (each C-level individually)** | Morning glance | Each opens their role-default Control Tower | Pillar drill-down, alerts, chat *"What needs my attention?"* |
+| **Weekly Monday — Leadership Team review** | 60–90 min | Each C-level prepares 5-min status from their pillar; cross-pillar issues surface; decisions made | Each pillar drill-down, decisions table writes during the meeting, initiative status updates after |
+| **Weekly 1:1s (CEO ↔ each C-level)** | 30 min × N | C-level walks CEO through their pillar's status; specific initiative reviews; coaching | Pillar drill-down + initiative cards + chat for specific deep-dives |
+| **Monthly executive review** | 2–3 hr | Deeper pillar-by-pillar review with KPI trends, initiative completion, risk floor; decisions for next month | KPI time-series, governance combined view, decisions table |
+| **Monthly close (CFO-led)** | 1 day | Verify financial KPI values are accurate; budget vs actual variance commentary | Economics pillar drill-down, KPI entry forms, audit log |
+| **Quarterly assessment + planning** | Half-day | Full assessment round across leadership; OPI compute; focus portfolio for next quarter | Assessment screens, OPI results, focus portfolio, governance view |
+| **Quarterly board prep (CEO + CFO + GC)** | Half-day | Pull data for board pack; decision log review; risk register | Chat *"Generate operating summary"*, decisions table, governance view, audit log |
+| **Annual planning** | 1–2 days | Strategic plan refresh; pillar weight rebalancing; customer pillar restructure if learned needs; lifecycle re-eval | Same as quarterly + customisation surfaces |
+
+The platform's value here is **not the meeting** — it's that every C-level walks in with the same data, viewed through their role lens. No one builds slides from scratch; the source of truth is in the platform.
+
+---
+
+## Decision rights — RACI by decision type
+
+Decisions logged to the `decisions` table get RACI metadata so the audit trail is unambiguous. R = Responsible (does the work), A = Accountable (owns the outcome), C = Consulted, I = Informed.
+
+| Decision type | R | A | C | I |
+|---|---|---|---|---|
+| Annual strategy | CEO + COO | CEO | All C-levels | Board |
+| Pillar customisation (rename / merge / split / add / hide) | CEO or admin | CEO | All C-levels | All members |
+| New initiative (cross-pillar) | Pillar-owning C-level | C-level | CEO + impacted C-levels | All members |
+| Practice score change | Manager (M9) or C-level | Pillar-owning C-level | Other relevant C-levels | All members |
+| KPI target setting | Pillar-owning C-level | C-level | CFO (financial) | All members |
+| KPI threshold setting | Pillar-owning C-level | C-level | — | All members |
+| Capital allocation > $X | CFO + relevant C-level | CEO | Other C-levels | Board (if material) |
+| Hiring (executive level) | CHRO + CEO | CEO | Board (key roles) | All members |
+| Cybersecurity incident response | CIO | CIO | CEO + GC | All members + Board (if material) |
+| Compliance corrective action | GC | GC | Pillar-owning C-level | All members |
+| Risk acceptance / mitigation | GC + Risk owner | CEO | All C-levels | Board (if material) |
+| Board governance decision | Board | Board chair | CEO + GC | All members |
+| Vendor selection > $Y | Procurement / CFO | CFO | Pillar-owning C-level | All members |
+
+The CEO is **not** R or A on every decision — that's deliberate. The platform pushes appropriate decision rights down so the CEO isn't the bottleneck on functional decisions, but is accountable for cross-cutting and strategic ones.
+
+---
+
+## Score-ownership and accountability — how the standard holds
+
+Each practice has an `owner_role` (which C-level owns the practice's outcome). A score-change request follows this flow regardless of who triggered it:
+
+```
+1. Anyone in the company can flag a practice for re-scoring (manager, C-level, CEO).
+2. The owning C-level (or their delegate from M9) provides evidence and proposes new score.
+3. AI grades the evidence against the maturity rubric (5 levels).
+4. A senior reviewer approves or rejects:
+   - For M9-owned practices: the owning C-level approves
+   - For C-level-owned practices: the CEO approves
+   - For CEO-owned practices (Direction pillar mostly): the board chair approves
+5. Decision logged to the decisions table with full RACI + evidence link.
+```
+
+**The CEO is not exempt.** Score changes for CEO-owned practices route to the board chair as senior reviewer. This is the single biggest mechanism that makes the platform a defensible standard — the new CEO doesn't get to grade themselves, and the leadership team sees that.
+
+Same for KPI updates: every value entered carries a `recorded_by` ID. If a CFO consistently rounds favourably, the audit log shows it. If a CRO reports overly optimistic pipeline values, the audit log shows it. The platform doesn't accuse — it records, and the team self-corrects when their work is visible.
+
+---
+
+## Operating cadence the platform enforces
+
+The platform doesn't impose meetings, but it **structures the rhythm** so that nothing important falls between weekly status updates and quarterly assessments.
+
+| When | What the platform prompts | Output |
+|---|---|---|
+| **Every morning (push notification)** | "3 alerts need attention; 2 approvals are waiting on you" | User opens Control Tower; processes |
+| **Monday 8am (digest email — v1.1)** | "Last week summary: KPIs that moved, decisions made, initiatives advanced. Open items for this week: …" | User scans before leadership team meeting |
+| **Wed of last week of month (email reminder)** | "Time to enter monthly KPI values for: [list of metrics with no value this month]" | C-level / functional owner enters values |
+| **Last week of quarter (banner in Control Tower)** | "Q4 assessment opens next week. Prepare your pillar." | C-levels review their pillar prior to scoring |
+| **First week of quarter** | "Q1 assessment is open. Score your owned practices by [date]." | Each leader scores; round_responses populate |
+| **Day after quarter assessment closes** | "OPI computed. Q1 focus portfolio recommended: [list]. Approve?" | CEO approves; focus portfolio commits |
+| **Day before board meeting** | "Board pack data is ready in [link]. Decision log for the period: [link]." | CEO + CFO + GC pull and assemble |
+| **Annually (60 days before fiscal year end)** | "Strategic plan refresh: review pillar customisation, lifecycle stage, weights." | Annual planning workflow |
+
+This rhythm is **opinionated** — the platform pushes the team into a discipline. Customers can adjust thresholds (skip the monthly KPI reminder, change the quarterly cadence to trimester) but the default rhythm is built in.
+
+---
+
+## The "standard" mechanism — why the leadership team must respect the new CEO
+
+A new CEO walks in. The leadership team is asking: *"do we have to take this person seriously?"*
+
+The platform answers that question through five built-in mechanisms — none of them depending on the CEO's personality:
+
+| Mechanism | What it does | Why it earns respect |
+|---|---|---|
+| **Same rubric for everyone** | Every score against the same maturity rubric. Not gut-feel sliders. | Leaders see they're being judged by a verifiable standard, not the CEO's mood. |
+| **Same evidence requirement** | Score changes require evidence graded against the rubric. | No promotion theatre. Levels are earned. |
+| **Same approval flow** | Every score change → AI grading → senior approval. CEO not exempt — their scores route to board chair. | The CEO submits to the same standard; that's the most powerful demonstration that the standard is real. |
+| **Same audit log** | Every decision, score change, KPI threshold breach logged immutably with RACI. | Decisions are traceable; politics gets surfaced; finger-pointing without evidence collapses. |
+| **Same chat reasoning** | Chat consults the same source-cited data for everyone. The new CEO and the longest-tenured C-level are reading the same numbers. | No private narratives, no "the CEO has different data." Equalises information asymmetry. |
+
+When a leadership team sees the new CEO **operating from this structure** rather than from preferences, dictat, or political moves, they have to up their own game to match. The CEO doesn't perform authority — the system holds them, and the team self-aligns to it.
+
+This is the difference between a dashboard and a standard. Dashboards inform; standards govern.
+
+---
+
+## Onboarding a new C-level (or replacing one)
+
+The platform also handles the leadership transition case explicitly — relevant for the CSIO use case where portfolio companies cycle CEOs.
+
+When a new C-level joins (CHRO replacing departed CHRO; new CIO; new GC):
+
+1. They're invited via the existing invitation flow with `role_lens` set to their role
+2. They land on their role-default Control Tower (their pillar drill-down + relevant KPIs)
+3. They see the audit log of decisions made by their predecessor in their pillar
+4. They see the active initiatives they inherit
+5. They see the maturity rubric for their pillar — what "Level 3 in cash forecasting" means is the same as it was yesterday
+6. First-90-days workflow surfaces (M11 v1.1) — the new C-level builds their 30/60/90 plan within the platform
+
+The departing C-level's authority is replaced cleanly because the **structure persists**. The platform is the institutional memory.
+
+---
 
 | Schema add | Purpose |
 |---|---|
