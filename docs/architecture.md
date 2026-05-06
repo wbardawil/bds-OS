@@ -1,0 +1,464 @@
+# BDS OS — System Architecture
+
+This is the **canonical architecture reference**. When in doubt about how the system is structured, where code lives, what services we depend on, or what tools we use, this doc decides. It supersedes earlier hints in `docs/how-it-works.md`, `docs/integration-plan.md`, and `docs/lovable-state.md`.
+
+**Status**: locked. The three foundational decisions below are committed; we don't re-litigate without explicit user approval.
+
+---
+
+## Three foundational decisions (locked)
+
+| # | Decision | Rationale |
+|---|---|---|
+| **F1** | **Own Supabase project** (not Lovable Cloud) | Required for Claude Code ops, CLI deploys, full observability, no vendor lock-in. ~$25/mo. |
+| **F2** | **Single monorepo** at `wbardawil/bds-OS`. Lovable's frontend lives under `apps/web/` and Lovable is reconfigured to push to that subdirectory. | One PR per change touches both layers; one CI pipeline; one source of truth. |
+| **F3** | **CI/CD + Sentry + Slack/Discord alerts in v1** | Production observability is non-negotiable; you must be able to know what's happening from a phone. |
+
+---
+
+## High-level diagram
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│  END USERS                                                        │
+│  ┌─────────────────────┐  ┌─────────────────────┐                │
+│  │ Beta CEOs / leaders │  │ You (operator)      │                │
+│  │ web + mobile        │  │ phone + laptop      │                │
+│  └────────┬────────────┘  └──────┬──────────────┘                │
+└───────────┼──────────────────────┼───────────────────────────────┘
+            ▼                      ▼
+┌──────────────────────────────────────────────────────────────────┐
+│  WEB APP (single React app, three modes via routes)               │
+│  Vite + React 18 + TypeScript                                     │
+│  shadcn/ui + Tailwind • Recharts • TanStack Query                 │
+│  Supabase JS client (typed) • React Router                        │
+│  Hosted on Vercel; deploys triggered by GitHub Actions on main    │
+│                                                                   │
+│  Mode 1: Public funnel (/, /assessment, /results, /auth)          │
+│  Mode 2: Customer app (/dashboard, /company/:id/*)                │
+│  Mode 3: Ops surface (/admin/*) — mobile-first, you-only          │
+└────────────────────────────┬─────────────────────────────────────┘
+                             │ Supabase JS client (typed)
+                             ▼
+┌──────────────────────────────────────────────────────────────────┐
+│  SUPABASE (your project, not Lovable Cloud)                       │
+│  ├── Postgres 15 + RLS                                            │
+│  ├── Auth (email/pw + Google OAuth)                               │
+│  ├── Edge Functions (Deno) — deployed via GitHub Actions          │
+│  ├── Realtime (live tile updates via subscriptions)               │
+│  ├── Vault (secrets management)                                   │
+│  └── Storage (evidence files)                                     │
+└────────────────────────────┬─────────────────────────────────────┘
+                             │
+                             ▼
+┌──────────────────────────────────────────────────────────────────┐
+│  EXTERNAL SERVICES                                                 │
+│  Anthropic API — chat                                              │
+│  Resend — invitation + digest emails                               │
+│  Sentry — error tracking (web + edge functions)                    │
+│  Slack/Discord webhook — your ops alerts to phone                  │
+└──────────────────────────────────────────────────────────────────┘
+                             ▲
+                             │
+┌──────────────────────────────────────────────────────────────────┐
+│  GITHUB — Single monorepo (wbardawil/bds-OS)                      │
+│                                                                    │
+│  apps/web/         — Lovable pushes here (the React app)          │
+│  packages/                                                         │
+│    engines/        — OPI, evidence-grader, focus-portfolio,       │
+│                       lifecycle, delegation-index, operating-debt │
+│    types/          — shared TS types (Database.ts, governance,    │
+│                       opi, kanban, etc.)                          │
+│  supabase/                                                         │
+│    migrations/     — schema migrations                            │
+│    functions/      — edge function source                         │
+│    seed.sql        — reference data seed                          │
+│  data/             — JSON source for seeds                        │
+│  docs/             — all documentation                            │
+│  .github/workflows/ — CI/CD (typecheck, test, deploy)             │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Tech stack — deliberate choices
+
+### Frontend (`apps/web/`)
+- **Vite + React 18 + TypeScript** — Lovable's default; fast dev, reasonable bundle.
+- **shadcn/ui** — component library Lovable uses; Tailwind-based; copy-paste source so we own it.
+- **Tailwind CSS** — utility-first, consistent design system.
+- **Recharts** — charts for KPI tiles, dashboard widgets, chat-rendered visualisations. Lovable already uses for the radar chart.
+- **TanStack Query** — server state caching + optimistic updates against Supabase.
+- **Supabase JS client** — fully typed via the generated `Database` type.
+- **React Router** — client-side routing.
+- **Web Speech API** — voice input on chat + ops surface.
+- **Sentry browser SDK** — error tracking.
+
+### Backend (Supabase)
+- **Postgres 15** — RLS-enforced multi-tenancy.
+- **Edge Functions (Deno)** — server-side compute. Functions deployed via GitHub Actions, source in `supabase/functions/`.
+- **Realtime** — subscribe to `metric_values`, `alerts`, `audit_log` for live tile updates without polling.
+- **Auth** — Supabase Auth with email/password + optional Google OAuth.
+- **Vault** — encrypted secrets (Anthropic API key, Resend API key, etc.).
+- **Storage** — uploaded evidence files, with RLS-bound bucket policies.
+
+### Build & Deploy (`.github/workflows/`)
+- **`gate.yml`** (already exists) — typecheck + secret scan on every PR.
+- **`deploy.yml`** (new for v1) — on merge to main:
+  - Run typecheck (web + edge functions)
+  - Run tests
+  - Apply migrations (`supabase db push`)
+  - Deploy edge functions (`supabase functions deploy`)
+  - Deploy web app to Vercel
+  - Smoke test (curl health endpoint)
+  - Notify Slack/Discord with deploy result
+- **Branch protection on main**: requires PR + green CI.
+
+### Observability
+- **Sentry** — web app (browser SDK) + edge functions (Deno SDK). Errors group automatically; high-severity issues notify Slack.
+- **Supabase logs** — built-in Postgres + Edge Function logs visible in Supabase dashboard.
+- **Custom op events** — append to `audit_log`; high-severity events trigger Slack via a database trigger calling a webhook edge function.
+- **Status page** — `/admin/status` shows last deploy, recent error count, latest customer feedback count, active alerts count. One mobile-bookmarkable URL.
+
+### External services
+- **Anthropic API** — `claude-sonnet-4-6` (or current Claude model) for chat-with-data. Called from `chat-with-data` edge function. API key in Supabase Vault.
+- **Resend** — invitation emails, weekly digest. Free tier (3000/month) sufficient for beta.
+- **Sentry** — free Developer tier.
+- **Slack or Discord webhook** — your ops alerts to your phone.
+
+---
+
+## UI architecture — three modes, one app
+
+The same React app serves three audiences via routes. Mobile-responsive throughout (no separate mobile app).
+
+### Mode 1 — Public funnel (existing in Lovable)
+Routes:
+- `/` — landing
+- `/assessment` — public quick assessment (existing Lovable wizard, kept as-is)
+- `/results` — shareable result page with lead capture → writes to `leads` table
+- `/auth` — sign-in / sign-up
+
+Stays as-is. Lead funnel.
+
+### Mode 2 — Authenticated customer app (the product)
+
+```
+/dashboard                       List of companies the user belongs to
+/company/:id                     Control Tower (the heart of the product)
+  /assessment                    Score the practices
+  /assessment/results            Pillar breakdown + radar
+  /portfolio                     Focus portfolio (top priorities)
+  /initiatives                   Initiative kanban (3-status v1)
+  /evidence                      Upload + AI grading
+  /governance                    Three views + decision log
+  /settings                      Customisation (pillars, practices, KPIs,
+                                  members, integrations)
+/portfolio                       Fund-CEO cross-company view
+                                   (visible only to users who own/admin
+                                   multiple companies)
+/feedback                        Always-accessible feedback widget
+```
+
+#### Control Tower home (`/company/:id`)
+
+The single most important screen. Layout (mobile-responsive — components stack vertically on phone):
+
+```
+┌────────────────────────────────────────────────────────────────┐
+│  [Logo]  Hospital Y ▾   [Search]   [Bell 3]   [Avatar]         │
+├────────────────────────────────────────────────────────────────┤
+│  ┌───────────┐ ┌──────────┐ ┌──────────┐ ┌──────────────────┐ │
+│  │ KPI tile  │ │ KPI tile │ │ KPI tile │ │ Top 3 Priorities │ │
+│  │ value+spk │ │ value+spk│ │ value+spk│ │ ▪ ...            │ │
+│  └───────────┘ └──────────┘ └──────────┘ └──────────────────┘ │
+│                                                                 │
+│  ┌───────────────────────┐ ┌─────────────────────────────────┐ │
+│  │ Pillar Radar          │ │ Pillar Status (8 pillars)        │ │
+│  │ [importance vs        │ │ Direction      ●●●●○            │ │
+│  │  competency radar]    │ │ Customer       ●●●○○            │ │
+│  └───────────────────────┘ │ ...                              │ │
+│                            └─────────────────────────────────┘ │
+│                                                                 │
+│  ┌───────────────────────┐ ┌─────────────────────────────────┐ │
+│  │ Chat (Julius-lite)    │ │ Recent Activity                  │ │
+│  │  > How is...          │ │ ▪ KPI updated 2h ago             │ │
+│  │  [chart inline]       │ │ ▪ Initiative advanced...         │ │
+│  │  Synthesised text...  │ │                                  │ │
+│  │  [Save to dashboard]  │ │                                  │ │
+│  └───────────────────────┘ └─────────────────────────────────┘ │
+└────────────────────────────────────────────────────────────────┘
+```
+
+Key UI principles:
+- **Hero row (top)**: 4 saved widgets the user has pinned. Defaults seeded from template; user re-arranges and pins more from chat. Powered by `widgets` table.
+- **Mid row**: Pillar radar + 8-pillar status strip. The assessment-grade signal at a glance.
+- **Bottom row**: Always-on chat (collapsible) + activity stream.
+- **Chat citations**: every numeric claim is source-cited (clickable link to underlying data row). No hallucinated numbers reach the user. *(Stress-test attack #2 fixed.)*
+- **Mobile**: stacks vertically; hero row scrolls horizontally; chat docks to bottom sheet.
+
+### Mode 3 — Ops surface (`/admin/*`, you-only)
+
+Role-gated by `auth.users` flag `is_platform_admin = true`. Mobile-first design.
+
+```
+/admin                Operator home (alert badge, recent feedback count, deploy status)
+/admin/alerts         Active alerts with ack buttons
+/admin/feedback       Beta customer feedback inbox
+/admin/deploys        Deploy history + manual trigger button
+/admin/customers      Beta customer list + status snapshot
+/admin/chat           Operator-mode chat — about the platform itself
+/admin/status         Status page (read-only health check, mobile-bookmarkable)
+```
+
+UI principles for `/admin/*`:
+- 48px+ tap targets
+- Single column on mobile
+- Voice input on every text input
+- "Ack" / "Approve" / "Reject" / "Defer" as primary actions on cards
+- Push notifications via Slack/Discord (same channels for alerts)
+
+---
+
+## Data model overview
+
+The full schema lives in `supabase/migrations/`. Tables grouped by purpose:
+
+### Identity & multi-tenant
+- `auth.users` (Supabase Auth) — added: `is_platform_admin boolean default false`
+- `profiles` — display info (kept from Lovable)
+- `companies` — kept from Lovable, renamed concept maps to `organizations` semantically
+- `company_members` — kept from Lovable; role enum (`owner | admin | member`)
+
+### Framework foundation (new)
+- `universal_pillars` — 8 rows, system-managed, immutable
+- `customer_pillars` — per-company, FK to a universal pillar (M:1 or "Other"); customer-customisable label / order / visibility
+- `templates` — system templates (hospital, university, professional-services-fund, etc.)
+
+### Assessment
+- `evaluation_rounds` — kept from Lovable; add `mode` enum (`quick | full`)
+- `round_responses` — kept from Lovable's jsonb shape; engines read via adapter
+- `practices` — per question_set, with FK to customer_pillars; practice-level rubrics here
+
+### Maturity rubrics (new — Stress-test fix #1)
+- `maturity_rubrics` — 5 levels per practice, descriptor + evidence criteria. Seeded for top 10–15 practices per template; default generic 5-level rubric for the rest.
+
+### Computed outputs
+- `opi_scores` — output of compute-opi engine
+- `focus_portfolios` — quarterly WIP-capped selection
+
+### Execution
+- `initiatives` — 3-status kanban for v1 (planned / in_progress / done)
+- `evidence` — uploads with AI grade
+- `score_change_requests` — minimum viable in v1 (no full approval queue)
+
+### Monitoring
+- `metric_sets` + `metrics` — KPI definitions per company, FK to customer_pillars
+- `metric_values` — time-series of actual values, append-only
+- `widgets` — saved widget instances on a dashboard
+- `dashboards` — per company, including default control tower
+- `alerts` — fired alerts with severity, status, linked metric / practice
+- `chat_messages` — conversation history per user per company
+
+### Governance & accountability
+- `decisions` — every governance decision logged: who proposed, who voted, dissent, data link *(Stress-test fix #5)*
+- `audit_log` — append-only event stream
+
+### Operations
+- `feedback` — beta feedback widget submissions
+- `pmf_responses` — Sean Ellis PMF survey responses
+
+### External integration
+- `webhook_payloads` — generic webhook ingestion (Zapier-bridged) — v1.1, scaffolded in v1
+- `connector_configs` — native connector configs per company — v2
+
+---
+
+## How code is organised in the monorepo
+
+```
+bds-OS/
+├── apps/
+│   └── web/                          Lovable's React app
+│       ├── src/
+│       │   ├── routes/                 React Router routes
+│       │   ├── components/             shadcn-derived components
+│       │   ├── lib/
+│       │   │   └── supabase.ts         typed Supabase client
+│       │   ├── integrations/
+│       │   │   └── supabase/
+│       │   │       ├── client.ts       (Lovable's existing setup)
+│       │   │       └── types.ts        (Lovable's auto-generated, kept)
+│       │   └── ...
+│       ├── public/
+│       └── package.json
+│
+├── packages/
+│   ├── engines/                      Pure logic, no IO
+│   │   ├── opi.ts
+│   │   ├── evidence-grader.ts
+│   │   ├── focus-portfolio.ts
+│   │   ├── lifecycle.ts
+│   │   ├── delegation-index.ts
+│   │   ├── operating-debt.ts
+│   │   └── package.json
+│   │
+│   └── types/                        Shared TS types
+│       ├── database.ts                  Supabase Database type
+│       ├── governance.ts
+│       ├── kanban.ts
+│       ├── opi.ts
+│       └── package.json
+│
+├── supabase/
+│   ├── migrations/                   SQL migrations (numbered)
+│   ├── functions/                    Edge function source
+│   │   ├── compute-opi/
+│   │   ├── grade-evidence/
+│   │   ├── select-focus-portfolio/
+│   │   ├── determine-lifecycle/
+│   │   ├── governance-report/
+│   │   ├── invite-user/
+│   │   ├── accept-invitation/
+│   │   ├── create-organization/
+│   │   ├── chat-with-data/             NEW for v1
+│   │   ├── webhook-ingest/             NEW for v1.1
+│   │   └── shared/
+│   ├── seed.sql                      Reference data seed
+│   └── config.toml                   Supabase project config
+│
+├── data/                             JSON source for seeds
+│   ├── practices.json (will deprecate)
+│   ├── areas.json (will deprecate)
+│   ├── maturity-levels.json (will deprecate)
+│   └── practice-metadata.json (will deprecate)
+│
+├── docs/                             All documentation
+│   ├── architecture.md (this file — canonical)
+│   ├── framework.md
+│   ├── coherence-mece.md
+│   ├── industry-templates.md
+│   ├── pilot-plan.md
+│   ├── data-analytics-vision.md
+│   ├── about.md
+│   ├── how-it-works.md
+│   ├── lovable-state.md
+│   ├── integration-plan.md
+│   └── external-patterns-review.md
+│
+├── .github/
+│   └── workflows/
+│       ├── gate.yml                  PR checks (already exists)
+│       └── deploy.yml                Deploy on main (NEW)
+│
+├── CLAUDE.md
+├── package.json (workspace root)
+├── tsconfig.json
+└── deno.json (for edge functions)
+```
+
+The engines move from `src/engines/` to `packages/engines/` as part of the monorepo restructure (clean import paths via TS workspace references). `src/` is deprecated.
+
+---
+
+## Migration path from current state to this architecture
+
+Current state:
+- Lovable Cloud running with Lovable's existing schema
+- `wbardawil/bds-OS` separate from `wbardawil/strategy-spark-86`
+- No CI/CD (only `gate.yml` for typecheck on PR)
+- No Sentry, no Slack alerts
+
+Target state:
+- Own Supabase project running our combined schema
+- Single monorepo at `wbardawil/bds-OS` with `apps/web/` containing the Lovable app
+- GitHub Actions CI/CD pipeline deploying to Supabase + Vercel
+- Sentry + Slack alerts wired
+
+### Pre-pilot architecture work (~3 days, parallel-friendly)
+
+**Day -3** — Supabase + monorepo (in parallel):
+- You: create new Supabase project at supabase.com (~5 min). Get project URL + anon key + service role key.
+- You: in Lovable, configure GitHub integration to push the app to `wbardawil/bds-OS` under `apps/web/` (rather than to its own repo).
+- Me: write SQL migration applying our framework tables on top of Lovable's existing schema (`universal_pillars`, `customer_pillars`, `templates`, `metrics`, `metric_values`, etc.). Generate from `docs/framework.md` and `docs/industry-templates.md`.
+- You: apply the migration via the Supabase CLI from your codespace (or paste into Supabase SQL editor).
+
+**Day -2** — Lovable points to new Supabase, GitHub Actions:
+- You: in Lovable, update env vars (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`) to point at the new project.
+- You: in Lovable, disconnect from Lovable Cloud (or accept the Lovable Cloud project will go unused).
+- Me: write `deploy.yml` GitHub Action — typecheck, test, supabase db push, supabase functions deploy, vercel deploy.
+- You: configure GitHub Actions secrets (Supabase service role key, Vercel deploy hook, Anthropic API key).
+- You: connect the GitHub repo to Vercel (one-time, via Vercel dashboard).
+
+**Day -1** — Sentry + alerts:
+- Me: spec the Sentry integration (web SDK + edge function SDK).
+- You: create Sentry project (free tier), get DSNs.
+- Me: spec the Slack/Discord webhook for ops alerts; integrate with `audit_log` triggers for high-severity events.
+- You: create the Slack/Discord channel + webhook URL.
+- Smoke test the whole pipeline by pushing a trivial change and watching it deploy.
+
+### After pre-pilot work, the regular pilot proceeds (13–15 days, see `docs/pilot-plan.md` updated for the new architecture)
+
+**Total: ~17–18 days from today to a beta-ready launch.**
+
+---
+
+## Cost model
+
+| Service | Tier | Monthly | Notes |
+|---|---|---|---|
+| Supabase | Pro | $25 | DB + auth + storage + edge fns + realtime |
+| Vercel | Hobby (or Pro $20) | $0–20 | Web hosting + preview deploys |
+| Sentry | Developer | $0 | Errors + alerting |
+| Anthropic API | usage-based | ~$50–100/mo for beta | Chat usage |
+| Resend | Free 3K/mo | $0 | Invites + digests |
+| GitHub | Free | $0 | Repo + Actions |
+| Slack/Discord | Free | $0 | Ops alerts |
+| Domain (optional) | annual | ~$15/yr | Custom domain |
+| **Total** | | **~$100–150/mo** | for v1 with 3 betas |
+
+Will rise with chat usage volume and customer count.
+
+---
+
+## How Claude Code can manage this architecture (post-launch)
+
+Once live, your daily ops loop:
+
+1. **Customer reports a bug** (via in-app feedback widget → row in `feedback` table → Slack notification → your phone).
+2. You open Claude Code on phone or laptop. Tell Claude: *"There's a bug in the assessment screen, fix it."*
+3. Claude reads the relevant code, writes a fix, commits to a branch, opens a PR.
+4. You review on GitHub mobile app. Approve.
+5. Merge → GitHub Actions runs the full pipeline → deploys → Slack notification ✅.
+6. You verify on the live site.
+
+For investigative tasks: *"Hey Claude, summarise this week's beta feedback"* → Claude reads the `feedback` table via Supabase MCP (or via SQL through edge function), writes a summary to `docs/feedback-2026-W18.md`, commits.
+
+For DB changes: *"Hey Claude, add a column for X"* → Claude writes a migration, opens a PR, the PR runs the migration in CI safely, you approve, deploys.
+
+This is **only possible because of F1 (own Supabase) + F2 (monorepo) + F3 (CI/CD)**. Without all three, the loop has manual paste steps.
+
+---
+
+## What this architecture supersedes
+
+- `docs/how-it-works.md` references to Lovable Cloud — **obsolete**. Update to point here.
+- Anything in `docs/lovable-state.md` about "Lovable Cloud (managed)" — **obsolete**. Lovable's app code stays; the Supabase backend moves to your own project.
+- The "two repos" framing in `docs/integration-plan.md` — **obsolete**. Single monorepo.
+- The 13-day pilot in `docs/pilot-plan.md` — **extended to 17–18 days** to include the 3-day pre-pilot architecture work.
+
+---
+
+## Open architectural decisions still pending
+
+These are smaller calls we'll make as we execute, recorded here for future-session continuity:
+
+1. **Vercel vs Netlify vs Cloudflare Pages** — Vercel default unless cost or feature reason otherwise. Free tier sufficient for v1.
+2. **Slack vs Discord** — your call. Slack is more business-y; Discord is faster to set up. Either works for ops alerts.
+3. **Custom domain** — when to attach (e.g. `bds-os.com`, `app.bds-os.com`). Probably Day -1 of pre-pilot or post-launch.
+4. **Postgres extensions to enable** — `pgcrypto`, `uuid-ossp` (default on Supabase), `pg_cron` (for scheduled digests), `pg_net` (for HTTP from triggers, used for Slack webhooks).
+5. **Backup strategy** — Supabase Pro includes daily backups + point-in-time recovery. Sufficient for v1; revisit at scale.
+6. **Multi-region / latency** — Supabase region choice (US East default). Revisit if customers complain about latency from non-US locations.
+7. **Edge function cold start** — first hit can be slow. For chat especially, consider warm-up technique or moving to a longer-running compute (later optimization).
+
+These get resolved as we encounter them. Track in this doc.

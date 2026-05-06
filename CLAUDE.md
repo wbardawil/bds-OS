@@ -121,24 +121,27 @@ npm run functions:serve           # supabase functions serve (local edge functio
 
 ## When picking up work
 
-1. Read `docs/coherence-mece.md` — **the synthesis**. Shows how every layer of
-   the product (framework, templates, tenant data, surfaces, engines) and every
-   phase of onboarding / visualization / monitoring fits together MECE.
-2. Read `docs/framework.md` — the conceptual foundation. The 8 universal pillars
-   that organise everything. Templates are suggestions within this framework;
-   the pillars themselves are MECE and not customer-customisable.
-3. Read `docs/pilot-plan.md` — the active 7-day plan. **Primary beta customer:
+1. Read `docs/architecture.md` — **the canonical architecture reference**. Three
+   foundational decisions are locked: (F1) own Supabase project, (F2) single
+   monorepo with Lovable in `apps/web/`, (F3) CI/CD + Sentry + Slack alerts in v1.
+   This doc supersedes earlier architecture content.
+2. Read `docs/coherence-mece.md` — the MECE synthesis across product layers,
+   onboarding, visualisation, monitoring.
+3. Read `docs/framework.md` — the conceptual foundation. The 8 universal pillars,
+   two-tier customisation (universal locked, customer pillars editable).
+4. Read `docs/pilot-plan.md` — the active end-to-end plan. **Primary beta:
    the fund CEO**, with hospital + university as their portfolio companies.
-4. Read `docs/industry-templates.md` for the hospital + university template
-   content (professional-services / fund template still to be authored).
-5. Read `docs/data-analytics-vision.md` for the visualization + monitoring
-   direction (Grafana / Julius style, no Power BI layer).
-6. Read `docs/integration-plan.md` for the longer-horizon roadmap.
-7. Read `docs/how-it-works.md` for the architecture in plain English.
+   Schedule: ~17–18 days from today (3 days pre-pilot architecture + 13–15 day
+   pilot build).
+5. Read `docs/industry-templates.md` for the hospital + university content
+   (professional-services / fund template still to be authored).
+6. Read `docs/data-analytics-vision.md` for the visualization direction
+   (Grafana / Julius style, no Power BI layer).
+7. Read `docs/integration-plan.md` for the longer-horizon roadmap.
 8. Read `docs/lovable-state.md` for what Lovable shipped (schema, journey).
 9. Read `docs/about.md` for the product summary and ICP.
-10. `docs/v1-plan.md` and `docs/frontend-contract.md` and `src/types/Database.ts`
-    are pre-Lovable-discovery and pre-framework — partially obsolete. Will be
-    revised when the new data model lands in Lovable.
+10. `docs/how-it-works.md`, `docs/v1-plan.md`, `docs/frontend-contract.md`, and
+    `src/types/Database.ts` are partially obsolete after the architecture lock —
+    update when their relevant migrations / specs land.
 11. `git log --oneline -20` on the active branch for recent context.
 12. Confirm with the user before doing anything destructive or visible (push, PR, comment).
