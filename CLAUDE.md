@@ -129,9 +129,9 @@ npm run functions:serve           # supabase functions serve (local edge functio
   steps in `docs/pilot-plan.md`. Day-by-day plan: 15 days from architecture
   setup to beta launch.
 - **Pending: Lovable iteration (you prompt, Lovable builds)**.
-  `docs/frontend-contract.md` is the paste-ready contract for Lovable —
-  schema, surfaces to build, edge functions to call, role-aware tower
-  patterns, source-citing chat UI rules.
+  `docs/lovable-prompts.md` is the **paste-ready manifest of 14 numbered prompts**
+  for the v1 frontend, sequenced day-by-day. `docs/frontend-contract.md` is the
+  descriptive contract Lovable consumes for context.
 - **Pending: deletion of superseded branch**. `claude/integrate-frontend-backend-kVV84`
   on origin is from before the architecture lock. Useful jsonb adapter cherry-picked.
   Delete via GitHub UI when convenient.
