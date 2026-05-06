@@ -1,0 +1,106 @@
+name: deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-main
+  cancel-in-progress: false
+
+jobs:
+  typecheck:
+    name: typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install --no-audit --no-fund
+      - run: npm run typecheck
+
+  migrate:
+    name: apply migrations
+    needs: typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Link Supabase project
+        run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      - name: Push migrations
+        run: supabase db push
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+
+  deploy-functions:
+    name: deploy edge functions
+    needs: migrate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Deploy each function
+        run: |
+          set -e
+          for fn_dir in supabase/functions/*/; do
+            fn_name=$(basename "$fn_dir")
+            if [ "$fn_name" = "shared" ]; then continue; fi
+            echo "Deploying $fn_name"
+            supabase functions deploy "$fn_name" --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt
+          done
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+
+  deploy-web:
+    name: deploy web (Vercel)
+    needs: deploy-functions
+    runs-on: ubuntu-latest
+    if: ${{ hashFiles('apps/web/**') != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Trigger Vercel deploy
+        run: |
+          curl -fsSL -X POST "$VERCEL_DEPLOY_HOOK"
+        env:
+          VERCEL_DEPLOY_HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
+
+  notify:
+    name: notify ops channel
+    needs: [typecheck, migrate, deploy-functions, deploy-web]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build status payload
+        id: payload
+        run: |
+          if [ "${{ needs.typecheck.result }}" = "success" ] && \
+             [ "${{ needs.migrate.result }}" = "success" ] && \
+             [ "${{ needs.deploy-functions.result }}" = "success" ] && \
+             ([ "${{ needs.deploy-web.result }}" = "success" ] || [ "${{ needs.deploy-web.result }}" = "skipped" ]); then
+            echo "status=ok" >> "$GITHUB_OUTPUT"
+            echo "icon=:white_check_mark:" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=fail" >> "$GITHUB_OUTPUT"
+            echo "icon=:x:" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Post to Slack/Discord webhook
+        if: ${{ secrets.OPS_WEBHOOK_URL != '' }}
+        run: |
+          curl -fsSL -X POST -H 'Content-Type: application/json' \
+            -d "{\"text\":\"${{ steps.payload.outputs.icon }} bds-OS deploy ${{ steps.payload.outputs.status }} on ${{ github.sha }} by ${{ github.actor }} — ${{ github.event.head_commit.message }}\"}" \
+            "$OPS_WEBHOOK_URL"
+        env:
+          OPS_WEBHOOK_URL: ${{ secrets.OPS_WEBHOOK_URL }}

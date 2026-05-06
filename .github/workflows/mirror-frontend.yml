@@ -1,0 +1,84 @@
+name: mirror-frontend
+
+# Mirrors wbardawil/strategy-spark-86 (Lovable's push target) into
+# wbardawil/bds-OS at apps/web/. Lovable can't push to a subdirectory,
+# so we sync via this scheduled action.
+#
+# Trigger: every 5 minutes + on manual dispatch.
+# Behaviour:
+#   1. Clone strategy-spark-86 to a temp dir (using the LOVABLE_REPO_PAT secret).
+#   2. Compute its current HEAD; compare to the last-mirrored marker file.
+#   3. If different: copy contents into apps/web/, commit, push to main.
+#   4. Skip if no change (avoid empty commits).
+#
+# This means deploys triggered by Lovable changes have a ~5-minute lag.
+# Acceptable for v1; can shorten later or move to webhook-triggered.
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: mirror-frontend
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Clone Lovable source
+        env:
+          LOVABLE_REPO_PAT: ${{ secrets.LOVABLE_REPO_PAT }}
+        run: |
+          git clone --depth=1 \
+            "https://wbardawil:${LOVABLE_REPO_PAT}@github.com/wbardawil/strategy-spark-86.git" \
+            /tmp/lovable-source
+
+      - name: Capture upstream SHA
+        id: upstream
+        run: |
+          cd /tmp/lovable-source
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Read last-mirrored marker
+        id: last
+        run: |
+          if [ -f apps/web/.lovable-source-sha ]; then
+            echo "sha=$(cat apps/web/.lovable-source-sha)" >> "$GITHUB_OUTPUT"
+          else
+            echo "sha=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Skip if unchanged
+        if: ${{ steps.upstream.outputs.sha == steps.last.outputs.sha }}
+        run: |
+          echo "No upstream changes since last mirror (sha=${{ steps.upstream.outputs.sha }}). Skipping."
+          exit 0
+
+      - name: Sync apps/web/ from Lovable source
+        if: ${{ steps.upstream.outputs.sha != steps.last.outputs.sha }}
+        run: |
+          rm -rf apps/web
+          mkdir -p apps/web
+          cp -a /tmp/lovable-source/. apps/web/
+          rm -rf apps/web/.git
+          echo "${{ steps.upstream.outputs.sha }}" > apps/web/.lovable-source-sha
+
+      - name: Commit and push
+        if: ${{ steps.upstream.outputs.sha != steps.last.outputs.sha }}
+        run: |
+          git config user.name "lovable-mirror"
+          git config user.email "lovable-mirror@bds-os.invalid"
+          git add apps/web
+          if git diff --cached --quiet; then
+            echo "Nothing to commit (cp produced no diff)."
+            exit 0
+          fi
+          git commit -m "chore(mirror): sync apps/web from strategy-spark-86@${{ steps.upstream.outputs.sha }}"
+          git push origin main
