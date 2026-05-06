@@ -163,6 +163,136 @@ Sized for a hospital system around US$50M revenue, multi-facility (small system:
 
 ---
 
+# Professional Services / Fund Template
+
+Sized for an investment fund / private equity firm / family office / venture capital fund. The fund itself is the customer; portfolio companies are separate companies in the platform that the fund's GP/Managing Partner monitors via the portfolio rollup view.
+
+References: Institutional Limited Partners Association (ILPA) standards, Standards Board for Alternative Investments (SBAI), AIMA best practices, ESG Data Convergence Initiative.
+
+## Pillar 1 — Direction (Strategy & Leadership)
+
+**Practices:**
+- `fund.direction.1` — Investment thesis is documented, reviewed annually, with measurable success criteria.
+- `fund.direction.2` — Multi-vintage fund strategy is defined (target size, sector focus, fund family progression).
+- `fund.direction.3` — Limited Partners (LPs) are engaged in strategic direction-setting, not just reporting recipients.
+- `fund.direction.4` — Decision rights between Investment Committee, GPs, operating partners, and operating teams are documented and respected.
+- `fund.direction.5` — Mission, values, and stakeholder commitments (impact, ESG, sustainability) are explicit and defended in investment decisions.
+
+**KPIs:**
+- % of strategic goals on track (annual review)
+- LP re-up rate (next vintage commitment from existing LPs)
+- Days from IC decision to documented follow-up action
+- IC meeting cadence and attendance
+
+## Pillar 2 — Customer (LPs + Portfolio Companies)
+
+**Practices:**
+- `fund.customer.1` — LP relations cadence (quarterly reports, annual meeting, ad-hoc transparency) is defined and consistently delivered.
+- `fund.customer.2` — LP satisfaction is measured (NPS, re-up rate, structured feedback) and acted upon.
+- `fund.customer.3` — Portfolio companies receive defined value-add support beyond capital (operating partner network, talent, customer introductions, advisory).
+- `fund.customer.4` — Co-investment opportunities are managed transparently with LPs.
+- `fund.customer.5` — New LP development (cultivation, due diligence support, first-meeting cadence) follows a documented process.
+
+**KPIs:**
+- LP NPS / satisfaction score (annual survey)
+- LP re-up rate
+- Portfolio CEO satisfaction with the fund (annual survey)
+- Average response time to LP inquiry (hours)
+
+## Pillar 3 — Delivery (Operations: Sourcing → Investment → Exit)
+
+**Practices:**
+- `fund.delivery.1` — Sourcing pipeline is tracked end-to-end with conversion metrics by stage (sourced → screened → IC → closed).
+- `fund.delivery.2` — Due diligence process is structured and produces consistent deal memos with clear go/no-go criteria.
+- `fund.delivery.3` — Investment Committee process is documented (cadence, voting protocol, deal-team accountability, post-decision tracking).
+- `fund.delivery.4` — Portfolio monitoring (KPIs, board cadence, intervention thresholds) is structured per investment thesis.
+- `fund.delivery.5` — Exit planning is initiated at investment, not at exit time. Hold-period strategy is documented per portfolio company.
+
+**KPIs:**
+- Deals reviewed per quarter
+- Conversion rate (sourced → closed) by stage
+- Average due diligence time (weeks)
+- Portfolio company KPI reporting on-time % (quarterly)
+- Average hold period vs target
+
+## Pillar 4 — Economics (Fund Performance & Capital Discipline)
+
+**Practices:**
+- `fund.economics.1` — Fund returns (Gross IRR, Net IRR, MOIC, DPI, RVPI, TVPI) are tracked against vintage / quartile benchmarks.
+- `fund.economics.2` — Management fee budget is disciplined and reviewed annually against actual usage.
+- `fund.economics.3` — Carry calculation methodology is documented, audited, and transparent to the team.
+- `fund.economics.4` — Capital calls and distributions are forecast 6–12 months ahead with LP communication.
+- `fund.economics.5` — Operating-partner / consultant / external-advisor spend is tracked against attributable value.
+
+**KPIs:**
+- Net IRR (vintage to date)
+- DPI / TVPI (cash returned vs total value vs commitments)
+- MOIC (multiple of invested capital)
+- Management fee burn vs budget
+- Operating-cost ratio of fund operations to assets under management
+
+## Pillar 5 — People (Investment Team & Operating Partners)
+
+**Practices:**
+- `fund.people.1` — Investment team development (mentorship, deal allocation, attribution recognition) is structured.
+- `fund.people.2` — Operating Partner network is curated (vetting, allocation by sector / capability, value-add tracking).
+- `fund.people.3` — Carry distribution is transparent and aligned with deal sourcing, leadership, and value-creation contributions.
+- `fund.people.4` — Succession planning for fund leadership (Managing Partner, GPs) exists with documented next-generation candidates.
+- `fund.people.5` — Diversity, equity, and inclusion are embedded in hiring, team composition, and operating-partner network curation.
+
+**KPIs:**
+- Investment-team turnover %
+- % of deals with documented operating-partner support
+- Carry attribution by deal team member
+- Diversity metrics (team composition by gender, background)
+
+## Pillar 6 — Technology (Deal & Portfolio Data Systems)
+
+**Practices:**
+- `fund.technology.1` — CRM / deal-tracking system captures all sourcing, due diligence, IC decisions, and post-investment activity in one place.
+- `fund.technology.2` — Portfolio company data (KPIs, financials, board materials) is centralised and refreshed quarterly minimum.
+- `fund.technology.3` — LP reporting is automated as much as possible (not Excel-driven; templates + data pipeline).
+- `fund.technology.4` — Cybersecurity for sensitive deal information (data rooms, IC materials, LP communications) is rigorously managed and independently audited.
+- `fund.technology.5` — Data analytics on portfolio performance, sourcing patterns, and deal attribution is operationalised.
+
+**KPIs:**
+- Data freshness % across portfolio (companies with current-quarter KPIs)
+- CRM data quality score (completeness + accuracy)
+- LP reporting automation % (vs manual Excel)
+- Cybersecurity incidents and findings (count, severity)
+
+## Pillar 7 — Governance (Compliance, ESG & Risk)
+
+**Practices:**
+- `fund.governance.1` — Limited Partner Advisory Committee (LPAC) is engaged as designed (cadence, conflicts review, key consents).
+- `fund.governance.2` — Compliance program (SEC registration if applicable, regulatory filings, AIFMD or local equivalents) is current and tested.
+- `fund.governance.3` — ESG framework (e.g. ESG Data Convergence Initiative) is documented and applied to investment decisions and portfolio monitoring.
+- `fund.governance.4` — Conflicts of interest (related-party transactions, shared investments, allocation conflicts) are formally identified and managed.
+- `fund.governance.5` — Insurance, indemnification, fund-level risk management, and key-person provisions are reviewed annually.
+
+**KPIs:**
+- LPAC meetings on cadence
+- Open compliance findings (count, severity)
+- ESG criteria applied to % of investment decisions
+- Conflicts-of-interest register up to date
+
+## Pillar 8 — Innovation (Strategic Adaptation)
+
+**Practices:**
+- `fund.innovation.1` — New investment-thesis areas are explored with structured discovery (industry research, expert networks, targeted sourcing).
+- `fund.innovation.2` — New fund vehicles or strategies (continuation funds, sector-specialist funds, separate accounts, secondaries) are evaluated against fund mission.
+- `fund.innovation.3` — Industry intelligence and thesis development feed back into deal sourcing prioritisation.
+- `fund.innovation.4` — Operating-partner network is actively curated to evolve with portfolio needs (new sectors, new capabilities).
+- `fund.innovation.5` — Lessons from past investments (post-mortems on losses, attribution analyses on wins) are captured and feed forward into future deal selection.
+
+**KPIs:**
+- New thesis areas explored per year
+- Investments in new sectors / new thesis areas (% of fund deployed)
+- Post-mortem completion rate (per material loss)
+- Net new operating partners added per year
+
+---
+
 # University Template
 
 Sized for an institution around US$6M revenue, multi-campus (main + branch campuses, or a small consortium).

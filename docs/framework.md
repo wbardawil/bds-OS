@@ -250,6 +250,34 @@ When a customer signs up: customer pillars = the 8 universals (1:1, same labels)
 
 ---
 
+## v2 evolution path — domain tags for framework-agnostic comparison
+
+The locked-8-universal-pillars design is correct for the 3 beta customers (hospital, university, fund — none of whom bring a strong pre-existing organisational framework). Long-term, we'll evolve to a **domain-tag layer** that makes the platform framework-agnostic for customers who do bring their own structure.
+
+The v2 evolution:
+- **Customer pillars** become fully customer-defined (any number, any names, any structure) — no longer constrained to map to universals
+- **Domain tags** (a closed vocabulary of ~25–30 well-defined business domains derived from Baldrige + EFQM + Balanced Scorecard) become the cross-customer comparison layer
+- Each practice and each KPI gets one or more domain tags
+- Cross-customer benchmarks, fund-CEO rollups, and AI chat reasoning all happen at the **tag level**, not the pillar level
+- The 8 universal pillars become **default templates** (most customers still pick them) but no longer the platform's MECE foundation
+
+Migration path when we ship v2:
+- Existing universal-pillar mappings auto-convert to domain tags (each universal pillar maps to 3–5 default domain tags)
+- Customers can keep their existing customer pillars unchanged
+- Customers who want to redesign their pillar structure post-v2 can do so
+
+Why we're not doing this in v1:
+- The 3 betas don't need it
+- 2 extra days of v1 build
+- The locked design is consistent with how Baldrige / EFQM / BSC frameworks operate (they all have fixed top-level structure)
+
+When to ship v2:
+- A real customer rejects the 8-pillar structure during sales — escalate v2 to v1.1
+- We add 5+ customers who all bring different frameworks
+- A specific buyer (PE firm with portfolio standards, Fortune 1000 with internal models) demands flexibility
+
+Until then: locked 8 + customer rename/merge/split/add covers what's needed.
+
 ## Open design decisions
 
 These are choices we'll need to make as we build, recorded here for cross-session continuity:
