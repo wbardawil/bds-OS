@@ -94,10 +94,50 @@ What needs to be added (over time, not for v1):
 
 ## How v1 stays consistent with this direction
 
-The 7-day pilot ships:
+The 15-day pilot (per `docs/pilot-plan.md`) ships:
 - Manual KPI entry (matches the "no data team needed" principle)
-- Simple number tiles on a basic Control Tower (the foundation that v2 evolves into)
-- No connectors, no NL query, no widget editor — too much for 7 days, but the data model leaves room for them
+- Live tiles on the Control Tower with threshold colour-coding
+- **Chat with text-grounded answers + inline Vega-Lite charts** (Julius-lite — see implementation below)
+- No native connectors, no NL → SQL execution, no widget drag-drop builder — those evolve in v1.1 / v2 / v3
+
+## v1 chat implementation (chat-with-data edge function)
+
+✅ Committed at `supabase/functions/chat-with-data/index.ts` (commit `f67d188`).
+
+### Request / response shape
+- **Request**: `POST { company_id, conversation_id?, question }`, Bearer JWT
+- **Response**: `{ conversation_id, text, vega_spec?, citations[], stripped_unsupported_numbers }`
+
+### Behaviour
+1. RLS-scoped fetch of the company's snapshot (latest assessment, recent KPI values, open alerts, active initiatives) using the caller's JWT — no cross-company leak.
+2. Pulls recent conversation history from `chat_messages` for multi-turn context.
+3. Calls Claude (`claude-sonnet-4-6`) with a structured system prompt containing the snapshot. Each KPI / alert / initiative is tagged with `[src:<id>]` so Claude can cite.
+4. Parses Claude's output: extracts an optional Vega-Lite spec (fenced ` ```vega-lite ` block) and `[src:<id>]` citations.
+5. **Validates numeric claims** — every numeric token in the response is checked against the snapshot's allowed values (recent KPI values, targets, thresholds). Numbers in the safe range 0–100 (counts / percentages) are allowed; specific metric-shaped numbers not in the snapshot are replaced with `[unverified]`.
+6. Persists user + assistant messages to `chat_messages` (service-role write).
+7. Returns the validated response.
+
+### Why Vega-Lite (not Recharts)
+- **Declarative JSON** — Claude can emit a chart as JSON without us writing a per-chart-type widget component.
+- **Universal** — same spec drives line, bar, scatter, radar, gauge, map.
+- **Drill-down** is just generating a refined spec on click.
+- **Saveable** — `widgets.vega_spec` jsonb stores the spec; rendering is just `vega-embed` on the frontend.
+- **Open-source, mature** (UW-built, used by Jupyter, GitHub, Observable).
+
+### Source-citation enforcement (the trust mechanism)
+The system prompt instructs Claude:
+> Only cite numbers that appear EXACTLY in the data below. If a number is not in the data, do not invent it. When citing a numeric value, reference its source by ID using the format `[src:ID]` inline.
+
+The numeric-claim validator runs after Claude's response and **strips any unsupported number** before the user sees it. The response includes `stripped_unsupported_numbers` so the frontend can show a small confidence indicator if Claude tried to hallucinate.
+
+This is the single most important trust mechanism in the chat layer. Without it, one wrong number and the CEO never trusts the platform again.
+
+### v1.1 / v2 evolution path
+- v1.1: "Save chart to dashboard" button → persists `vega_spec` as a row in `widgets`
+- v1.1: Drag-and-drop reorder of saved widgets
+- v1.2: Drill-down on click of a chart point → generates a refined spec
+- v2: NL → SQL execution against `metric_values` for advanced analytics
+- v3: SQL connector reading customer's external Postgres / Snowflake; BI semantic layer connector for Looker / Tableau
 
 If we get the data model right in v1, v2/v3/v4 are extensions, not rewrites.
 

@@ -104,15 +104,31 @@ This is the **canonical architecture reference**. When in doubt about how the sy
 
 ### Build & Deploy (`.github/workflows/`)
 - **`gate.yml`** (already exists) — typecheck + secret scan on every PR.
-- **`deploy.yml`** (new for v1) — on merge to main:
-  - Run typecheck (web + edge functions)
-  - Run tests
-  - Apply migrations (`supabase db push`)
-  - Deploy edge functions (`supabase functions deploy`)
-  - Deploy web app to Vercel
-  - Smoke test (curl health endpoint)
-  - Notify Slack/Discord with deploy result
-- **Branch protection on main**: requires PR + green CI.
+- **`deploy.yml`** (✅ committed `82b42a1`) — on push to main:
+  - `typecheck` job: `npm install && npm run typecheck`
+  - `migrate` job: `supabase link` + `supabase db push` (uses `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD` secrets)
+  - `deploy-functions` job: iterates `supabase/functions/*/` and runs `supabase functions deploy <name>` for each (skips `shared/`)
+  - `deploy-web` job: triggers Vercel deploy hook (`VERCEL_DEPLOY_HOOK` secret); skipped if `apps/web/` doesn't exist yet
+  - `notify` job: posts deploy outcome to Slack/Discord webhook (`OPS_WEBHOOK_URL` secret)
+- **`mirror-frontend.yml`** (✅ committed `82b42a1`) — every 5 min + manual dispatch:
+  - Clones `wbardawil/strategy-spark-86` (using `LOVABLE_REPO_PAT` secret)
+  - Compares its current HEAD to `apps/web/.lovable-source-sha` marker file
+  - If changed: `cp -a` into `apps/web/`, removes `.git`, writes new marker, commits with `chore(mirror): sync apps/web from strategy-spark-86@<sha>`, pushes to main (which then triggers `deploy.yml`)
+  - If unchanged: exits without committing
+- **Branch protection on main**: requires PR + green CI for human-authored changes; mirror commits use the bot identity `lovable-mirror@bds-os.invalid` and are allowed to push directly via the action's default token.
+
+### GitHub Actions secrets needed (one-time setup)
+| Secret | Purpose | Where it comes from |
+|---|---|---|
+| `SUPABASE_ACCESS_TOKEN` | Authenticates `supabase` CLI | supabase.com → Account → Access Tokens |
+| `SUPABASE_PROJECT_REF` | Identifies which project to deploy to | Supabase project URL (`https://<ref>.supabase.co`) |
+| `SUPABASE_DB_PASSWORD` | DB password for `db push` | Supabase project → Settings → Database |
+| `VERCEL_DEPLOY_HOOK` | Triggers a Vercel deploy | Vercel project → Settings → Git → Deploy Hooks |
+| `OPS_WEBHOOK_URL` | Posts deploy notifications | Slack/Discord webhook URL |
+| `LOVABLE_REPO_PAT` | Reads `strategy-spark-86` for mirror | github.com → Settings → PATs (fine-grained, read-only on `wbardawil/strategy-spark-86`) |
+| `ANTHROPIC_API_KEY` | Chat edge function (set on Supabase, not GitHub) | console.anthropic.com → API Keys |
+| `RESEND_API_KEY` | Email edge functions (set on Supabase) | resend.com → API Keys |
+| `SENTRY_DSN_WEB` + `SENTRY_DSN_EDGE` | Error reporting (set in Vercel + Supabase env) | sentry.io → project settings |
 
 ### Observability
 - **Sentry** — web app (browser SDK) + edge functions (Deno SDK). Errors group automatically; high-severity issues notify Slack.

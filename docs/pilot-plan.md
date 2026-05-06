@@ -54,12 +54,17 @@ Pre-pilot architecture work runs **in parallel** with content/spec authoring. Th
 - Create accounts: Sentry (Developer free), Vercel (Hobby free), Slack workspace or Discord with `#ops-alerts` channel + webhook URL.
 - Configure GitHub Actions secrets: Supabase service role key, Vercel deploy hook, Anthropic API key, Resend API key, Sentry DSN, Slack webhook URL.
 
-**Me** (autonomous):
-- Write the **SQL migration** that applies the framework tables on top of Lovable's existing schema (`universal_pillars`, `customer_pillars`, `templates`, `metrics`, `metric_values`, `widgets`, `dashboards`, `alerts`, `chat_messages`, `decisions`, `feedback`, `pmf_responses`, `maturity_rubrics`).
-- Write the **professional-services / fund template** in `docs/industry-templates.md`.
-- Write **`.github/workflows/deploy.yml`** — typecheck → migration → edge function deploy → Vercel deploy → Slack notify.
-- Spec the **Sentry integration** (web SDK + edge function SDK) and **Slack/Discord webhook integration** with `audit_log` triggers.
-- Spec the **`chat-with-data` edge function** including source-citation enforcement.
+**Me** (autonomous — most of this is **already complete** as of commit `f67d188`):
+- ✅ **3 SQL migrations** applying the framework tables on top of Lovable's schema:
+  - `supabase/migrations/20260506000001_create_framework.sql` — schema (universal_pillars, customer_pillars, question_sets, practices, maturity_rubrics, metric_sets, metrics, metric_values, dashboards, widgets, alerts, decisions, decision_votes, chat_messages, feedback, pmf_responses, platform_admins) + enums + indexes
+  - `supabase/migrations/20260506000002_seed_framework.sql` — seeds 8 universal pillars + 4 templates (smb-default, hospital, university, fund) + defaults `role_lens` to `viewer` for existing members
+  - `supabase/migrations/20260506000003_framework_rls.sql` — RLS policies via `is_member_of(_company_id)` / `is_admin_of(_company_id)` / `is_platform_admin()` helpers
+- ✅ Fund template authored in `docs/industry-templates.md`
+- ✅ **CI/CD workflows**: `.github/workflows/deploy.yml` (typecheck → migrate → deploy edge fns → Vercel deploy → Slack notify) + `.github/workflows/mirror-frontend.yml` (5-min cron mirror from `strategy-spark-86` into `apps/web/`)
+- ✅ **`chat-with-data` edge function** at `supabase/functions/chat-with-data/index.ts` — Anthropic-powered chat with source-citation enforcement (every numeric claim must reference a source row; unverified claims replaced with `[unverified]` token before the user sees them) and Vega-Lite chart spec output
+- ⏳ **Practice + KPI seed migration** (the actual content for the 4 templates) — pending
+- ⏳ **Maturity rubrics seed** (top 5 practices per pillar × 5 levels × 3 betas = ~600 entries) — pending
+- ⏳ **Sentry integration spec** + **Slack trigger from audit_log** — pending
 
 ### Day 3 — Lovable applies foundation, monorepo settles
 
