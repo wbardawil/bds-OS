@@ -121,19 +121,24 @@ npm run functions:serve           # supabase functions serve (local edge functio
 
 ## When picking up work
 
-1. Read `docs/framework.md` — **the conceptual foundation**. The 8 universal pillars
-   that organise everything. Templates are suggestions within this framework; the
-   pillars themselves are MECE and not customer-customisable.
-2. Read `docs/pilot-plan.md` — the **active 7-day plan** to ship the hospital +
-   university pilots.
-3. Read `docs/industry-templates.md` for the hospital and university template content,
-   organised by pillar.
-4. Read `docs/integration-plan.md` for the longer-horizon roadmap (post-pilot).
-5. Read `docs/how-it-works.md` for the architecture in plain English.
-6. Read `docs/lovable-state.md` for what Lovable shipped (schema, journey).
-7. Read `docs/about.md` for the product summary and ICP.
-8. `docs/v1-plan.md` and `docs/frontend-contract.md` and `src/types/Database.ts`
-   are pre-Lovable-discovery and pre-framework — partially obsolete. Will be
-   revised when M2 of the integration plan lands.
-9. `git log --oneline -20` on the active branch for recent context.
-10. Confirm with the user before doing anything destructive or visible (push, PR, comment).
+1. Read `docs/coherence-mece.md` — **the synthesis**. Shows how every layer of
+   the product (framework, templates, tenant data, surfaces, engines) and every
+   phase of onboarding / visualization / monitoring fits together MECE.
+2. Read `docs/framework.md` — the conceptual foundation. The 8 universal pillars
+   that organise everything. Templates are suggestions within this framework;
+   the pillars themselves are MECE and not customer-customisable.
+3. Read `docs/pilot-plan.md` — the active 7-day plan. **Primary beta customer:
+   the fund CEO**, with hospital + university as their portfolio companies.
+4. Read `docs/industry-templates.md` for the hospital + university template
+   content (professional-services / fund template still to be authored).
+5. Read `docs/data-analytics-vision.md` for the visualization + monitoring
+   direction (Grafana / Julius style, no Power BI layer).
+6. Read `docs/integration-plan.md` for the longer-horizon roadmap.
+7. Read `docs/how-it-works.md` for the architecture in plain English.
+8. Read `docs/lovable-state.md` for what Lovable shipped (schema, journey).
+9. Read `docs/about.md` for the product summary and ICP.
+10. `docs/v1-plan.md` and `docs/frontend-contract.md` and `src/types/Database.ts`
+    are pre-Lovable-discovery and pre-framework — partially obsolete. Will be
+    revised when the new data model lands in Lovable.
+11. `git log --oneline -20` on the active branch for recent context.
+12. Confirm with the user before doing anything destructive or visible (push, PR, comment).
