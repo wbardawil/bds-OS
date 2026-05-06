@@ -88,6 +88,19 @@ readable by any authenticated user.
   to check what's already implemented client-side. Flows likely already in Lovable:
   signup, org creation, invitation send/accept, simple data CRUD via PostgREST.
   Don't duplicate. If `apps/web/` is empty, ask the user to import Lovable first.
+- **Doc hygiene — signal over noise**:
+  - Before creating a new `.md`, check if existing docs cover the topic. Prefer
+    extending an existing canonical doc over creating a new one.
+  - Each doc has a single clear purpose. If two docs overlap in scope, consolidate.
+  - When a doc is superseded, mark with `**Status: superseded by [docs/X.md]**`
+    at the top. Don't silently let docs drift.
+  - Active canonical docs (read first): `architecture.md`, `framework.md`,
+    `pilot-plan.md`, `coherence-mece.md`, `csio-fit-mece.md`,
+    `industry-templates.md`, `data-analytics-vision.md`, `about.md`.
+  - Superseded by architecture lock + Lovable discovery (kept for history):
+    `v1-plan.md`, `frontend-contract.md`, `how-it-works.md`, `integration-plan.md`.
+  - Don't create a doc just to capture a passing thought — capture in a commit
+    message or in CLAUDE.md's "where we are right now" section instead.
 
 ## Common commands
 

@@ -1,189 +1,218 @@
-# CSIO Fit & ICP MECE Analysis
+# Role-Fit MECE Analysis (Operating Leadership + Fund Overlay)
 
-The final synthesis. This doc shows that the platform — as designed in the v1 plan — covers what a Chief Strategy & Investment Officer (CSIO) actually does in their role, and serves the ICP we defined in `docs/about.md`.
+**Status: canonical**. Replaces the earlier CSIO-only framing.
 
-The CSIO is not just a target persona — for the fund beta, **you are the CSIO**, operating the platform yourself. So this analysis doubles as a self-test.
+The platform's primary users are the **operating C-suite + management layer** of each company. The fund / CSIO seat is a **secondary overlay** that aggregates across portfolio companies. This doc covers both, with operating leadership as primary.
 
 ---
 
-## CSIO role — MECE breakdown of what the role actually does
+## PRIMARY — Operating C-suite (the daily users)
 
-Seven functional buckets. Mutually exclusive (each task has a primary home), collectively exhaustive (nothing about a CSIO's work falls outside these).
+### MECE breakdown of executive roles
 
-| # | Bucket | What's done | Cadence |
-|---|---|---|---|
-| **C1** | **Strategy & Thesis** | Investment thesis development, sector / market intelligence, annual + multi-year planning, new fund or vehicle strategy | Annual + ad-hoc |
-| **C2** | **Portfolio Oversight** | Quarterly portfolio review, ongoing operating-health monitoring, intervention on at-risk companies, value-add coordination, exit planning | Weekly + quarterly |
-| **C3** | **Capital & Economics** | Fund returns tracking (IRR, MOIC, DPI), capital deployment monitoring, reserve management, LP capital calls / distributions, carry attribution | Monthly + quarterly |
-| **C4** | **Stakeholder Management (External)** | LP relations, board representation across portfolio companies, operating partner network curation, portfolio CEO relationships | Continuous + quarterly |
-| **C5** | **People (Internal)** | Fund team management, deal-team development, mentorship, succession planning, hiring + onboarding | Continuous |
-| **C6** | **Risk, Compliance & Governance** | LPAC engagement, ESG framework application, regulatory compliance, conflicts of interest, audit + risk-management cadence | Quarterly + on-event |
-| **C7** | **Innovation & Learning** | Thesis evolution, post-mortem on losses, industry-trend monitoring, best-practice diffusion across portfolio companies | Quarterly + ad-hoc |
+Eight roles. Each has a primary pillar focus + secondary touch-points; together they cover the operating layer of any company.
 
-These map cleanly onto the 8 universal pillars (with a slight asymmetry — C2 and C4 both touch Customer/Stakeholder; the platform handles this through pillar tagging at the practice level):
+| # | Role | Primary pillar | Secondary | Cadence |
+|---|---|---|---|---|
+| **R1** | **CEO** (operating) | Direction (strategic priorities, board, lifecycle) | All 8 — they hold the integrated picture | Daily glance; deep weekly + quarterly |
+| **R2** | **COO** | Delivery (operations, throughput, quality, supply) | People, Technology, Innovation | Daily — initiatives + ops KPIs |
+| **R3** | **CFO** | Economics (financial discipline, P&L, capital, cash) | Governance, Direction (capital allocation) | Daily — financial KPIs; deep monthly + quarterly |
+| **R4** | **CRO** (Revenue) | Customer (acquisition, retention, satisfaction) | Innovation, Delivery (sales execution) | Daily — pipeline, conversion, win/loss |
+| **R5** | **CHRO** (HR) | People (talent, culture, engagement, succession) | Direction, Governance (labour, DEI) | Weekly — engagement, retention; deep monthly |
+| **R6** | **CIO / CTO** | Technology (systems, data, security) | Governance (cyber), Innovation | Daily — incidents, uptime; deep weekly |
+| **R7** | **CMO** (often folded into CRO) | Customer (brand, demand, segmentation) | Innovation, Direction | Daily — campaign, brand signals |
+| **R8** | **GC / Compliance / CRO-risk** | Governance (legal, regulatory, ethics) | Risk overlay across all pillars | Weekly — incidents; deep quarterly |
 
-| CSIO bucket | Maps primarily to universal pillar |
+Plus **management layer**:
+
+| **M9** | **VPs / Directors / Functional Leads** | Their pillar's deep view + their initiatives | Cross-pillar handoffs | Daily within domain |
+
+### Why this is MECE
+
+- **Mutually exclusive** — every operational activity has a primary owner. Cash → CFO. Hiring → CHRO. Cybersecurity → CIO. Sales pipeline → CRO. Operating delivery → COO. Direction → CEO. Compliance → GC.
+- **Collectively exhaustive** — every operational concern has a home. Cross-pillar concerns (e.g. M&A) get **shared ownership** via cross-tagging on initiatives.
+
+### Each role's daily / weekly / quarterly platform usage
+
+#### R1 — CEO
+- **Daily** (5–10 min, mobile): Control Tower → top alerts across 8 pillars, pillar status strip, pending approvals, chat *"What needs my attention?"*
+- **Weekly** (30 min): each C-level reports their pillar status; CEO scans drill-downs; reviews decision log.
+- **Quarterly** (2–3h): assessment round, focus portfolio approval, board pack prep.
+- **v1 support**: ✅ Control Tower + chat + governance + initiative kanban + audit log + assessment cycle. Board-pack export = v1.1.
+
+#### R2 — COO
+- **Daily** (15–20 min): Delivery pillar drill-down, ops KPIs, initiative kanban, chat *"What's blocked?"*
+- **Weekly** (1h): People + Technology pillars (workforce + ops systems), escalations, initiative status with owners.
+- **Quarterly**: Delivery pillar assessment, set ops improvement initiatives.
+- **v1 support**: ✅ Pillar drill-down + KPI tiles + initiatives + chat. Detailed cycle-time analytics = v1.1.
+
+#### R3 — CFO
+- **Daily** (10 min): financial KPI tiles (revenue, margin, cash, days AR), threshold alerts, chat *"How is gross margin tracking?"*
+- **Weekly** (1h): full Economics drill-down, compliance findings, treasury decisions logged.
+- **Monthly** (3–4h): close cycle, budget vs actual variance.
+- **Quarterly** (1d): board pack, capital plan, audit prep.
+- **v1 support**: ✅ Economics + KPIs + thresholds + chat + governance + audit. Automated board financial pack = v1.1; full close-cycle workflow = v2.
+
+#### R4 — CRO
+- **Daily** (15 min): pipeline KPIs, Customer pillar (retention, NPS, churn), chat.
+- **Weekly**: forecast vs actual, sales accountability.
+- **Monthly**: market positioning (Innovation pillar — competitive landscape, new offerings), pricing.
+- **Quarterly**: Customer pillar assessment, set GTM initiatives.
+- **v1 support**: ✅ Customer + Innovation + KPIs + chat. CRM connector (HubSpot / Salesforce) = v2.
+
+#### R5 — CHRO
+- **Weekly** (45 min): People pillar drill-down (engagement, attrition, hiring), HR-owned initiatives, pulse-survey results.
+- **Monthly** (1–2h): comp / promotion / succession workflow, DEI metrics (Governance × People).
+- **Quarterly**: People pillar assessment, performance-review cycle initiation.
+- **v1 support**: ✅ People + KPIs + initiatives + chat. HRIS connector = v2; comp/promotion workflow = v2; DEI dashboard = v1.1.
+
+#### R6 — CIO / CTO
+- **Daily** (10 min): Technology pillar (uptime, security, system status), real-time alerts.
+- **Weekly** (1–2h): tech debt + initiatives, vendor / tool spend, cybersecurity (Governance × Tech).
+- **Quarterly**: Technology assessment, IT investment plan, security audit.
+- **v1 support**: ✅ Technology + KPIs + chat + governance. Direct integration with monitoring tools (Datadog) = v2; cyber-specific dashboard = v1.1.
+
+#### R7 — CMO
+- **Daily** (10 min): Customer pillar (brand awareness, lead gen), campaign KPIs.
+- **Weekly**: demand-gen funnel, content / channel mix.
+- **Monthly + Quarterly**: brand health, market positioning, Customer + Innovation assessments.
+- **v1 support**: ✅ Customer + Innovation + KPIs. Marketing analytics integrations = v2.
+
+#### R8 — GC / Compliance
+- **Weekly** (30 min): Governance pillar (compliance findings, risk register, incidents).
+- **Monthly**: audit log review, decision-log entries.
+- **Quarterly**: Governance assessment, board risk update, regulatory cycle.
+- **v1 support**: ✅ Governance + audit log + decision-log table. Decision-log dedicated UI = v1.1; matter-management = v3.
+
+#### M9 — Management Layer
+- **Daily** (10 min): their pillar's drill-down filtered to their function, owned initiatives, evidence pending.
+- **Weekly**: 1:1 with their C-level.
+- **Quarterly**: score assigned practices; upload evidence for level-up claims.
+- **v1 support**: ✅ Drill-down + initiatives + evidence + AI grading. Function-level filtering = v1.1.
+
+---
+
+## Role-aware UI — small schema add for v1
+
+Today the design has a single dashboard layout per company. To serve all roles properly, default tiles must adapt to role.
+
+| Schema add | Purpose |
 |---|---|
-| C1 Strategy & Thesis | Direction |
-| C2 Portfolio Oversight | Customer (portfolio companies as stakeholders) + Delivery (operations of monitoring) |
-| C3 Capital & Economics | Economics |
-| C4 Stakeholder Management (External) | Customer (LPs as stakeholders) + Governance (board rep) |
-| C5 People (Internal) | People |
-| C6 Risk, Compliance & Governance | Governance |
-| C7 Innovation & Learning | Innovation |
+| `company_members.role_lens` text | One of `ceo / coo / cfo / cro / chro / cio / cmo / legal / manager / viewer` — drives **default tile selection**. Distinct from access role (`owner / admin / member`) which controls permissions. |
+| `dashboards.role_default` text | A dashboard configuration tagged to a role; first time a user lands, they see the dashboard matching their role_lens, then can customise. |
+| `practices.primary_role` array | Which roles own this practice (informational; allows "show me MY practices" filter). |
+
+Default Control Towers per role:
+
+| Role | Default tiles on hero |
+|---|---|
+| CEO | Pillar status strip + top 3 cross-pillar alerts + portfolio rollup (if applicable) + decisions this week |
+| COO | Initiative kanban + Delivery KPIs + cross-pillar blockers |
+| CFO | Cash + runway + margin + days AR + open audit findings |
+| CRO | Pipeline + conversion + revenue forecast + customer NPS |
+| CHRO | Engagement + attrition + hiring pipeline + open positions |
+| CIO | Uptime + security incidents + IT spend vs budget + key system status |
+| CMO | Lead volume + brand health + active campaigns + CAC |
+| GC / Legal | Open compliance findings + risk register + audit log |
+| Manager | Their pillar drill-down + owned initiatives + pending evidence |
+
+**Implementation**: schema lands in v1 migration. UI for role-default Control Towers = v1.1 (in v1 everyone sees the same Control Tower; in v1.1 the default tile selection adapts).
 
 ---
 
-## ICP needs (from `docs/about.md`) cross-referenced with CSIO role
+## ICP needs cross-referenced with operating roles
 
-The ICP definition specifies COO / Chief of Staff / operations-minded CEO at $10M–$250M companies, with PE Operating Partners as a secondary buyer monitoring 5–20 portfolio companies.
+Per `docs/about.md`'s ICP definition. Most-relevant role consumes each value proposition:
 
-**A CSIO at a fund is structurally a PE Operating Partner with broader strategy + investment scope.** Same MECE bucket of needs, expanded:
-
-| ICP need (from about.md) | CSIO equivalent | Platform v1 support |
+| ICP value | Role most consuming it | v1 support |
 |---|---|---|
-| "Clarity on what matters this week" | C1 + C2 + C3 — direction + portfolio + capital top-of-mind | ✅ Control Tower home with portfolio rollup tiles + chat + alert summary |
-| "Less reactive firefighting, more compounding investment" | C2 — manage by exception via alerts; intervene early | ✅ Threshold-based alerts + risk-floor flags on assessment |
-| "A shared model of what 'good' looks like" | C2 + C5 — same maturity model across portfolio companies AND fund team | ✅ 8-pillar framework + maturity rubrics for top practices |
-| "Queue of well-scoped initiatives instead of vague directives" | C2 + C5 — initiative kanban for fund + each portfolio company | ✅ Initiative kanban with 3-status v1 |
-| "A maturity scoreboard hard to fake" | C2 + C6 — evidence + AI grading + senior approval loop | ✅ Evidence upload + AI rubric grading; senior approval surface in v1.1 |
-| "Operational due-diligence artefact" | C1 + C2 — exit-ready operating profile per portfolio company | ✅ Per-company governance view + audit log + assessment trajectory |
-| "Quarter-over-quarter visibility for the board" | C4 + C6 — LPAC / board reporting | ✅ Combined governance view in v1; dedicated board view + LP-report export in v1.1 |
+| "Clarity on what matters this week" | CEO + COO | ✅ |
+| "Shared model of what 'good' looks like in their function" | Each C-level for their pillar; management for their function | ✅ |
+| "Queue of well-scoped initiatives, not vague directives" | COO + management | ✅ |
+| "Maturity scoreboard hard to fake" | CEO (board defence) + GC (audit) | ✅ |
+| "Operational due-diligence artefact" | CFO + CEO (M&A / fundraising / sale) | ✅ |
+| "Quarter-over-quarter visibility for the board" | CEO + CFO (board prep) | ✅ v1 (combined view); per-role = v1.1 |
 
-Coverage check: every ICP value proposition maps to a v1 capability (with v1.1 fillers for two surfaces).
-
----
-
-## Daily / weekly / quarterly: what the CSIO actually does with the platform
-
-This is the test. If the platform doesn't deliver what a CSIO needs at each cadence, it's not fit-for-purpose for the role.
-
-### Monday morning — 10 minutes (mobile)
-1. Open the platform → Control Tower for **the fund** (default landing for the CSIO)
-2. Hero tiles: portfolio rollup summary (one tile per portfolio company with overall score + biggest gap), top 3 alerts across the portfolio, pending approvals
-3. Chat: *"What changed across the portfolio this past week?"* — synthesised paragraph with source citations
-4. Tap into any portfolio company that's red-flagged → quick scan of their pillars + KPIs
-5. Decide what's worth following up on this week
-
-**Platform support**: ✅ v1 — Control Tower hero + chat + portfolio rollup + drill-down all in scope.
-
-### Tuesday — portfolio company review (laptop)
-1. Open Hospital Y's company view
-2. See their pillar status, recent KPI updates, current focus portfolio, in-flight initiatives
-3. Drill into Delivery pillar — see clinical-quality practices, latest evidence
-4. Chat: *"Why has HCAHPS dropped 4 points since last month?"* — Claude synthesises from KPI trend + recent score changes + initiative activity
-5. Add a comment on an initiative if intervention needed
-6. Optionally: flag a practice for re-scoring at next assessment
-
-**Platform support**: ✅ v1 — pillar drill-down + chat + initiative comments. Score-flagging is v1.1.
-
-### Wednesday — IC or strategy session (laptop)
-1. Pull data live during IC: *"Which portfolio companies are below their target IRR? Group by hold period."*
-2. Chart renders inline; reference in IC discussion
-3. Document the IC decision via a decision-log entry (decision table populated in v1; dedicated UI in v1.1)
-4. Linked decision shows in audit log
-
-**Platform support**: ✅ v1 — chat with chart rendering + decision-log table writes. Decision-log dedicated UI = v1.1.
-
-### Thursday — LP communication prep (laptop)
-1. *"Summarise portfolio operating health for the Q3 LP letter — top 3 wins, top 3 risks, one paragraph per portfolio company"*
-2. Claude returns structured paragraphs grounded in real data
-3. CSIO copy-pastes into LP letter draft
-4. (Automated LP-report generation = v2 — not v1)
-
-**Platform support**: 🟡 v1 partial — chat answers but LP-report generation is v2.
-
-### Friday — fund team review (laptop)
-1. Open the fund's company view (the fund itself, not portfolio)
-2. Review fund's own pillar status (Direction, People, Technology, etc.)
-3. Read team feedback from in-app feedback widget
-4. Update fund's own initiatives
-5. Decide priorities for next week
-
-**Platform support**: ✅ v1 — fund as a self-managed company alongside portfolio.
-
-### Quarterly — full reassessment cycle
-1. Trigger a new assessment round per company (fund + 2 portfolio companies for the betas)
-2. Each company's leadership team scores their practices over a week
-3. CSIO reviews consolidated results, computes OPI, sees focus portfolio recommendations
-4. Decisions logged for each company's quarterly priorities
-5. LPAC report compiled (manually in v1, automated in v2)
-
-**Platform support**: ✅ v1 — all assessment + OPI + focus portfolio mechanics in scope.
+Coverage: every ICP value lands on a v1 capability.
 
 ---
 
-## Where the platform is incomplete for the CSIO role (gaps + when filled)
+## Cross-cutting needs that span roles
 
-| Gap | What's missing | When it ships |
+| Cross-cut | Roles involved | Platform support |
 |---|---|---|
-| **Dedicated Investment Pipeline workflow** (sourcing / DD / IC) | Pipeline tracking is in fund template's Delivery pillar but no dedicated CRM-like UI for sourcing → DD → IC → close | v2 — a Pipeline surface |
-| **Automated LP-report generation** | CSIO can pull data via chat but assembling the formal quarterly LP letter is still manual | v2 — LP-report templating engine |
-| **Carry attribution dashboard** | Fund template has carry-attribution practices but no per-deal team-contribution view | v1.1 — surfacing what's in the data |
-| **Industry intelligence feeds** | External market data inflow (sector reports, comp transactions, peer benchmarks) | v3 — connector framework matures |
-| **Comparative cross-portfolio benchmarking** | "How does Hospital Y compare to peer hospitals in our portfolio AND industry?" — internal comparison works in v1, industry-peer comparison needs the v2 tag layer | v2 |
-| **LPAC meeting workflow** | LPAC engagement is a practice; no dedicated LPAC meeting prep / minutes / consent workflow | v1.1 |
-| **Decision-log dedicated UI** | Decisions logged from day 1 to the table; surface to browse / search them = v1.1 | v1.1 |
+| **Initiative cross-pillar tagging** (e.g. M&A integration) | CEO + CFO + CHRO + CIO + GC | ✅ multi-pillar tagging on initiatives in v1 |
+| **Decision logging** (e.g. board decision affecting all functions) | CEO + GC + relevant C-level | ✅ decisions table writes from any surface |
+| **Cross-functional KPIs** (e.g. CLV spans CRO + CFO) | CRO + CFO | 🟡 multi-pillar metric tagging = v1.1 (v1 = single-pillar) |
+| **Risk floors affecting multiple pillars** (cyber breach → Tech + Gov + Customer) | CIO + GC + CEO | ✅ risk-floor flags surface everywhere |
+| **Evidence supporting multiple practices** | Any owner | ✅ evidence rows can link to multiple practices = v1.1 (v1 = single-link) |
 
-**Net for the CSIO at a fund running 2 portfolio betas**: v1 covers ~85% of role-week activities. v1.1 closes another ~10%. v2 closes the remaining ~5% (advanced workflows like pipeline, LP-report automation, industry feeds).
+---
+
+## SECONDARY — Fund / CSIO overlay (the portfolio aggregator)
+
+When the operating-layer view is complete per company, a **fund or PE Operating Partner** sees an aggregation across the companies they own / oversee. This is the secondary persona, layered on top of the operating layer.
+
+### CSIO functional buckets (mapped to universal pillars)
+
+| # | Bucket | Maps to |
+|---|---|---|
+| **C1** | Strategy & Thesis | Direction |
+| **C2** | Portfolio Oversight | Customer (portfolio companies as stakeholders) + Delivery |
+| **C3** | Capital & Economics | Economics |
+| **C4** | Stakeholder Mgmt (LPs, boards, op partners) | Customer + Governance |
+| **C5** | Internal People (fund team) | People |
+| **C6** | Risk, Compliance & Governance | Governance |
+| **C7** | Innovation & Learning (thesis evolution, post-mortems) | Innovation |
+
+### CSIO platform usage at-a-glance
+
+- **Monday morning** (10 min, mobile): Portfolio rollup → all owned companies summary tiles + top 3 cross-portfolio alerts + chat *"What changed across the portfolio?"*
+- **Tuesday**: drill into a portfolio company; review their assessment + KPIs; chat for trend explanations.
+- **Wednesday** (IC / strategy): chat-pulled live data; decisions logged.
+- **Thursday** (LP comms): chat synthesises portfolio operating health; manual paste into LP letter (auto-generated LP report = v2).
+- **Friday**: review fund's own company view (the fund itself is one of N companies the CSIO owns).
+- **Quarterly**: full reassessment cycle across all portfolio companies; LPAC report.
+
+### CSIO-specific gaps
+
+| Gap | Ships in |
+|---|---|
+| Investment pipeline workflow (sourcing → DD → IC → close) | v2 — dedicated Pipeline surface |
+| Automated LP-report generation | v2 — LP-report templating engine |
+| Carry attribution dashboard | v1.1 |
+| Industry intelligence feeds | v3 — connector framework matures |
+| Cross-portfolio benchmarking with industry peers | v2 — needs domain-tag layer |
+| LPAC meeting workflow | v1.1 |
+
+**Net for the CSIO running the fund + 2 portfolio betas**: v1 covers ~85% of role-week activities; v1.1 closes ~10%; v2 closes ~5%.
 
 ---
 
 ## What this MECE confirms
 
-1. **The 7 CSIO buckets map cleanly to the 8 universal pillars.** Nothing in the CSIO role falls outside the framework. (C2 and C4 both touch Customer pillar — that's expected, it reflects that LPs and portfolio CEOs are different stakeholder groups within the same Customer / Stakeholder dimension.)
-
-2. **The ICP value proposition (per `docs/about.md`) maps 1:1 to v1 capabilities.** Every promised value lands in v1 or v1.1. Nothing is hand-wavy.
-
-3. **The CSIO can run their week from this platform, on a phone, with no other tool, by week 2 of beta access.** Some advanced workflows (pipeline, LP-report) deferred but not blocking.
-
-4. **Two beta portfolio companies (hospital + university) + one fund (the CSIO's workspace) is the right test rig** for this role. Multi-company portfolio rollup view is the differentiator. If it works for the CSIO across these 3 companies in their varied industries (healthcare + higher-ed + investment), it works for the broader operating-partner ICP.
+1. **Eight operating roles + management layer map cleanly to the 8 universal pillars.** Every operational activity has a primary owner role.
+2. **The ICP value proposition holds for every role** — each consumes different surfaces of the same underlying data.
+3. **Role-aware default Control Towers are a small schema extension** (3 columns), shipping in v1's migration; UI for role-default landing = v1.1.
+4. **The fund / CSIO seat is correctly positioned as a secondary overlay** — useful for portfolio aggregation but the primary product value is the operating C-suite running each company.
+5. **The 3 beta customers (fund + hospital + university) test both layers**: the fund's own C-suite running the fund, hospital's C-suite running the hospital (same), and the CSIO overlay seeing all three.
 
 ---
 
-## Implications for what we ship in v1 (re-confirming priorities)
+## Implication for `docs/about.md` (positioning fix)
 
-Re-prioritising the v1 build around CSIO need-gravity (importance × frequency of use):
+The current ICP description in `docs/about.md` leans towards fund / Operating Partner as primary. **That should be re-prioritised**:
 
-| Capability | CSIO need-gravity | v1 status |
-|---|---|---|
-| Portfolio rollup view | **Highest** — opened daily | ✅ Day 7-8 |
-| Chat with data + source citations | **Highest** — used multiple times daily | ✅ Day 9-10 |
-| Per-company assessment + scoring | **High** — quarterly + ongoing intervention | ✅ Day 12 |
-| KPI tiles with thresholds | **High** — daily glance | ✅ Day 7-8 |
-| Initiative kanban (3 status) | **Medium** — referenced weekly | ✅ Day 11 |
-| Combined governance view | **Medium** — quarterly board prep | ✅ Day 11 |
-| Maturity rubrics for top practices | **High** — without these, scoring is gut-feel and CSIO loses authority | ✅ Day 5 (200 entries × 3 templates = 600) |
-| Audit log + decisions table | **Medium** — referenced when defending decisions | ✅ Day 1 (table); UI v1.1 |
-| Carry attribution UI | Medium for fund; not portfolio companies | v1.1 |
-| LP-report generation | High for fund; v2 | v2 |
-| Investment pipeline UI | Medium for fund only; v2 | v2 |
+- **Primary users**: operating C-suite (CEO, COO, CFO, CRO, CHRO, CIO, CMO, GC) + management layer at $10M–$250M companies
+- **Secondary buyers / aggregators**: PE Operating Partners, fund CSIOs (the portfolio rollup view)
+- **Tertiary stakeholders**: boards, LPs
 
-The 15-day plan in `docs/pilot-plan.md` already covers all the High and Medium-High items. The Medium and Medium-Low items either ship in v1.1 or v2 based on real CSIO feedback during the beta.
-
----
-
-## The closing test: would a real CSIO use this on day 1?
-
-Imagine you receive a Calendly link for a 30-minute platform demo. The CSIO says: *"Show me how I'd use this Monday morning."*
-
-You walk through:
-1. Phone shows portfolio rollup with 3 companies (fund + 2 betas) — pillar status + alerts at a glance.
-2. CSIO taps into the most-flagged company; sees pillar drill-down + recent KPI updates + active initiatives.
-3. CSIO opens chat: *"What changed this past week?"* — gets a paragraph with source-cited numbers.
-4. CSIO sees the alert that requires their approval; taps approve.
-5. End of demo. Total time: 4 minutes.
-
-If that demo lands, the CSIO will use this. **It does, because v1 covers the daily-use surfaces** (Control Tower + chat + drill-down + alerts).
-
-If the demo had to show LP-report generation or pipeline workflow, we'd fail — but those aren't day-1 surfaces. v1 wins where it counts.
+The fund-CEO Monday-morning scenario in `docs/about.md` is fine but needs to be paired with an operating CEO + COO + CFO scenario at a single company. I'll update `about.md` next to fix the framing.
 
 ---
 
 ## What this doc does NOT do
 
-- It does NOT add new requirements to v1. It validates v1 against the CSIO role, not extends it.
-- It does NOT redesign the framework. The 8 pillars + two-tier model stand.
-- It does NOT replace `docs/about.md`'s ICP definition. It cross-references it.
-
-When v1 ships and we have real CSIO feedback, this doc gets revisited to mark which v1.1 / v2 items got promoted based on actual usage data.
+- It does NOT add new functionality requirements to v1 — it confirms what's there serves all operating roles, plus one small schema addition for role-awareness.
+- It does NOT replace `docs/coherence-mece.md` — that doc covers the product/system MECE (layers, onboarding, viz, monitoring); this doc covers the user/role MECE.
+- It does NOT change the framework — the 8 universal pillars handle all 8 C-level roles cleanly.
