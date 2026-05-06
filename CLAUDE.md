@@ -121,14 +121,19 @@ npm run functions:serve           # supabase functions serve (local edge functio
 
 ## When picking up work
 
-1. Read `docs/integration-plan.md` — the **active plan** for integrating bds-OS
-   with the Lovable app. Supersedes earlier planning docs.
-2. Read `docs/how-it-works.md` for the architecture in plain English.
-3. Read `docs/lovable-state.md` for what Lovable actually shipped (schema, journey).
-4. Read `docs/about.md` for the product summary and ICP.
-5. `docs/v1-plan.md` and `docs/frontend-contract.md` and `src/types/Database.ts`
-   are pre-Lovable-discovery — they describe bds-OS's original standalone schema
-   and are now partially obsolete. Update or delete as M2 of the integration plan
-   lands.
-6. `git log --oneline -20` on `claude/promote-assessments-P5G00` for recent context.
-7. Confirm with the user before doing anything destructive or visible (push, PR, comment).
+1. Read `docs/framework.md` — **the conceptual foundation**. The 8 universal pillars
+   that organise everything. Templates are suggestions within this framework; the
+   pillars themselves are MECE and not customer-customisable.
+2. Read `docs/pilot-plan.md` — the **active 7-day plan** to ship the hospital +
+   university pilots.
+3. Read `docs/industry-templates.md` for the hospital and university template content,
+   organised by pillar.
+4. Read `docs/integration-plan.md` for the longer-horizon roadmap (post-pilot).
+5. Read `docs/how-it-works.md` for the architecture in plain English.
+6. Read `docs/lovable-state.md` for what Lovable shipped (schema, journey).
+7. Read `docs/about.md` for the product summary and ICP.
+8. `docs/v1-plan.md` and `docs/frontend-contract.md` and `src/types/Database.ts`
+   are pre-Lovable-discovery and pre-framework — partially obsolete. Will be
+   revised when M2 of the integration plan lands.
+9. `git log --oneline -20` on the active branch for recent context.
+10. Confirm with the user before doing anything destructive or visible (push, PR, comment).
