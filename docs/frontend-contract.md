@@ -1,27 +1,24 @@
-# BDS OS — Frontend Contract
+# Frontend Contract — Paste-Ready for Lovable
 
-**Audience**: Lovable (and any other frontend that talks to the bds-OS Supabase backend).
+**Status: canonical**. This is the single artefact to give Lovable so it consumes the new framework cleanly. Paste the relevant sections into Lovable's chat as instructions when building each surface.
 
-**Purpose**: the single source of truth for what endpoints exist, what shapes data takes, what auth is required, and the canonical user journey. The frontend should not deviate from this contract. When the contract changes, this file is updated and the diff is re-pasted into Lovable.
+This contract assumes:
+- Architecture is locked per `docs/architecture.md` (own Supabase project, two-repo with mirror, CI/CD, Sentry).
+- Framework migrations are applied (`supabase/migrations/20260506000001-7`).
+- Lovable's existing surfaces (public funnel, auth, dashboard) stay; new surfaces layer on top.
 
-Companion file: `src/types/Database.ts` — the TypeScript types Lovable should use with `createClient<Database>(...)`.
+For a richer narrative read `docs/coherence-mece.md`, `docs/csio-fit-mece.md`, `docs/pilot-plan.md`. This doc is the actionable contract.
 
 ---
 
-## 1. Project setup
-
-Lovable needs two environment values:
-
-| Variable | Where to find it | What it's for |
-|---|---|---|
-| `VITE_SUPABASE_URL` (or `NEXT_PUBLIC_SUPABASE_URL`) | Supabase project → Settings → API → Project URL | The backend host |
-| `VITE_SUPABASE_ANON_KEY` (or `NEXT_PUBLIC_SUPABASE_ANON_KEY`) | Supabase project → Settings → API → anon public key | Client-safe key. RLS enforces what each user can see. |
-
-Initialise the client once:
+## 1. Setup — what Lovable uses to talk to the backend
 
 ```typescript
+// src/integrations/supabase/client.ts (likely already exists in Lovable)
 import { createClient } from '@supabase/supabase-js';
-import type { Database } from './types/Database';
+import type { Database } from '../../../src/types/Database';
+//   ^ Copy src/types/Database.ts from bds-OS into Lovable's tree.
+//   It's the canonical schema type and supports createClient<Database>().
 
 export const supabase = createClient<Database>(
   import.meta.env.VITE_SUPABASE_URL,
@@ -29,303 +26,241 @@ export const supabase = createClient<Database>(
 );
 ```
 
+Env vars Lovable needs (set on Lovable + Vercel):
+- `VITE_SUPABASE_URL` — your Supabase project URL
+- `VITE_SUPABASE_ANON_KEY` — Supabase anon key
+- `VITE_SENTRY_DSN` — Sentry browser DSN (for error reporting)
+- `VITE_FRONTEND_URL` — used for share links (e.g. invite, delegated assignments)
+
 ---
 
-## 2. Authentication
+## 2. Auth contract
 
-### Sign-up
-Use Supabase Auth's standard email + password sign-up:
+Lovable's existing `/auth` flow stays. Sign-up creates `profiles` automatically via the `handle_new_user` trigger. After sign-up the user has an `auth.users` row but may not yet belong to any company.
 
-```typescript
-const { data, error } = await supabase.auth.signUp({
-  email: 'newuser@example.com',
-  password: '...',
-  options: { data: { name: 'New User' } },
-});
+Three onboarding paths from there:
+1. **Returning member** — they see a `companies` list at `/dashboard` (their `company_members` rows), pick one, route to `/company/:id`.
+2. **First-time admin (no companies)** — they hit a "Create your first company" screen → calls `create-organization` edge function.
+3. **Invited member** — they have an invitation token in the URL → calls `accept-invitation` edge function.
+
+---
+
+## 3. The 8 universal pillars (locked structure)
+
+Every customer's data is bucketed into 8 pillars. Customers can rename labels but cannot remove pillars (v1). Lovable should display **customer pillar labels** but use `universal_pillar_id` for sorting, grouping, and cross-tenant logic.
+
+```
+1. Direction       — Strategy, vision, mission, planning, decision rights
+2. Customer        — Who we serve and how well
+3. Delivery        — Operations, processes, throughput, quality, supply
+4. Economics       — Financial discipline, capital, P&L, sustainability
+5. People          — Talent, culture, engagement, leadership, succession
+6. Technology      — Systems, data, security, interoperability
+7. Governance      — Board, compliance, risk, accountability, ethics
+8. Innovation      — Learning, R&D, new offerings, adaptation
 ```
 
-After sign-up the user has an `auth.users` row but **no `users` row in our application schema yet**. They cannot read or write any organisation-scoped data until either:
-- They call **`create-organization`** (first-time setup), or
-- They call **`accept-invitation`** with a token they were emailed.
-
-### Sign-in (returning user)
-```typescript
-const { data, error } = await supabase.auth.signInWithPassword({
-  email: 'returning@example.com',
-  password: '...',
-});
-```
-
-### Session token
-Every request carries the user's JWT automatically (the Supabase client handles it). Edge functions read it from the `Authorization: Bearer <jwt>` header.
+When rendering a "pillars view," fetch the user's company's `customer_pillars` ordered by `sort_order`, then resolve `universal_pillar_id` for behaviour/colour.
 
 ---
 
-## 3. The canonical user journey
+## 4. Screens to build (post-existing)
 
-### Path A — first-time admin (creates an organisation)
+In addition to Lovable's existing public funnel + auth + dashboard + company view + members view + round-by-code:
 
-1. **Sign up** via `supabase.auth.signUp` (above).
-2. **Land on a "create your organisation" screen**. Required field: name. Optional: industry, revenue_range, employee_count, years_in_operation.
-3. **Call `create-organization`** (edge function — see §5). On success the user becomes an admin of the new org.
-4. **Set lifecycle**: call `determine-lifecycle` to compute the org's lifecycle stage.
-5. **Start a new round**: insert a row into `assessment_rounds`.
-6. **Score practices**: for each of the 82 practices, upsert into `round_responses` with `importance_score` and `competency_score` (1–5 each).
-7. **Compute OPI**: call `compute-opi` once all 82 scored.
-8. **View results**: read from `opi_scores` grouped by `phase_number` (1=Proof, 2=Structure, 3=Scale).
-9. **Build focus portfolio** (optional this round): call `select-focus-portfolio` with a quarter string.
+### A. Onboarding wizard (when a new company is created)
+Path: `/onboarding`
+- Step 1 — Welcome
+- Step 2 — Lifecycle (revenue range, employee count) → `companies.lifecycle_stage` set via `determine-lifecycle` edge function
+- Step 3 — Industry template picker (smb-default / hospital / university / fund). Selection clones template into a new `question_set` + `metric_set` for the company, plus customer_pillars (defaulting 1:1 with universal_pillars, label = universal_pillar.name).
+- Step 4 — Customise pillars (rename labels; v1.1: merge / split / hide / add)
+- Step 5 — Customise practices (drop / edit / add per pillar)
+- Step 6 — Invite team members → `invite-user` edge function
+- Step 7 — Done, route to `/company/:id`
 
-### Path B — invited teammate (joins an existing organisation)
+### B. Control Tower (`/company/:id` enhancement)
+The default landing for an authenticated user inside a company. Mobile-responsive; stacks vertically on phone.
 
-1. **Receive invitation email** with a link `https://app.../accept-invite?token=...`.
-2. **Open link**. Frontend reads the token from the URL.
-3. **Sign up or sign in** via Supabase Auth using the same email the invitation was sent to.
-4. **Call `accept-invitation`** with the token. On success the user is added to the org with the role specified in the invitation.
-5. From here the user can score practices, see results, etc., scoped to their org.
+Composition (top to bottom):
+- Header: company switcher + alert badge + avatar
+- Hero row: 4 widgets pinned to default dashboard. Default tiles by role lens (see §6 below). Powered by `widgets` table joined to `metrics` for KPI tiles.
+- Mid row: 8-pillar radar (importance vs competency from latest `round_responses`) + 8-pillar status strip
+- Bottom row: chat panel (`chat-with-data` edge function) + recent activity stream (last 20 rows of `audit_log` for this company)
 
-### Path C — returning user (already a member)
+### C. Assessment screen (`/company/:id/assessment`)
+- Tabs across the 8 customer pillars
+- Per practice: dual sliders (importance 1-5, competency 1-5)
+- Auto-saves on every change to `round_responses.category_scores` (jsonb), `completed_at` stays null until user clicks "Submit" → set `completed_at = now()`
+- Maturity rubric tooltip: when user hovers a practice, show the 5-level rubric from `maturity_rubrics` (descriptor + evidence_criteria per level). This is the "standard to live by."
+- Progress indicator (X of N scored)
 
-1. **Sign in** via `signInWithPassword`.
-2. **Read their `users` row** to get `organization_id` and `role`:
-   ```typescript
-   const { data: user } = await supabase.from('users').select('*').single();
-   ```
-3. Route to dashboard. RLS scopes everything else to their organisation automatically.
+### D. Pillar drill-down (`/company/:id/pillars/:pillarId`)
+- Practice list with importance/competency scores (latest round) + gap
+- KPI tiles for metrics in this pillar
+- Initiatives in this pillar (kanban subset)
+- Recent activity for this pillar
+
+### E. Focus portfolio (`/company/:id/portfolio`)
+- Top N practices by `opi_scores.priority_rank` for the current quarter
+- Each card: practice name, OPI score, phase (1/2/3), recommended action, "Make initiative" button
+- Powered by `select-focus-portfolio` edge function output
+
+### F. Initiatives kanban (`/company/:id/initiatives`)
+- 3-column kanban (v1): Planned / In Progress / Done. (v2 expands to 7-status with evidence loop.)
+- Cards: title, owner, due date, linked practice, evidence count
+- Drag-drop between columns updates `initiatives.status`
+
+### G. Evidence + AI grade (`/company/:id/initiatives/:id/evidence`)
+- Upload area for evidence (file or URL) → writes `evidence` row
+- "Grade" button → calls `grade-evidence` edge function → renders the AI grade card with `rubric_mapping`, `completeness_score`, `quality_score`, `risk_flags`, `level_proposal`, `recommendation`
+
+### H. Governance (combined view in v1, three views in v1.1)
+`/company/:id/governance`
+Tabbed (or single page in v1):
+- **Executive lens**: top alerts + active initiatives + KPI summary
+- **Board lens**: pillar maturity radar + decisions log + risk register
+- **Functional lens**: per-pillar drill-down filtered by user's role_lens
+
+### I. Settings (`/company/:id/settings`)
+- Pillar customisation (rename labels in v1)
+- Practice customisation (edit / drop / add per pillar)
+- KPI customisation (edit / drop / add; set thresholds; choose source: manual / webhook / connector)
+- Members + role_lens management
+- Integrations (v1.1: webhook URL + connector configs)
+
+### J. Portfolio rollup (fund-CEO-only, `/portfolio`)
+Visible only when the user owns/admins multiple companies.
+- List of all companies they belong to with summary tiles (overall score, top 3 alerts, pending approvals)
+- Drill-in link per company
+
+### K. Delegation (`/company/:id/round/:roundId/delegate`)
+Admin-only screen.
+- Pick: a single practice OR a whole pillar block
+- Enter: assignee email(s), optional name, optional message, optional due date
+- Submit → `delegate-questions` edge function → emails sent + share URLs returned
+- Below: list of delegations on this round (status: pending/reminded/overdue/complete) from `assignment_progress` view
+
+### L. Delegated response (`/delegated/:token`)
+Anonymous (token-authenticated) screen.
+- Token in URL → fetch via `submit-delegated-response` edge function (which validates token + scope)
+- Render only the practices in scope (single practice OR all practices in the assigned pillar)
+- Same dual-slider UI as the main assessment
+- Submit → `submit-delegated-response` edge function
+
+### M. Feedback widget (everywhere, persistent)
+- Fixed bottom-right "Send feedback" button on every authenticated screen
+- Modal: free-text + auto-tagged with `screen` (current route)
+- Submit → INSERT into `feedback` table
+
+### N. Ops surface (`/admin/*`, platform admin only)
+For the platform operator (you) only. Role-gated by `platform_admins` table.
+- `/admin` — operator home: alerts, recent feedback count, last deploy, customer count
+- `/admin/feedback` — beta feedback inbox
+- `/admin/customers` — list of all companies
+- `/admin/chat` — operator chat (different system prompt than customer chat)
 
 ---
 
-## 4. Direct database access (PostgREST)
+## 5. Edge functions Lovable calls
 
-These tables are safe for the frontend to read/write directly via the Supabase JS client. RLS enforces organisation scoping.
-
-### Reference data — read-only for everyone authenticated
-
-| Table | Use |
-|---|---|
-| `areas` | list 8 areas to group practices for the scoring UI |
-| `practices` | list 82 practices, joined to `area_id` |
-| `practice_metadata` | needed for advanced UIs (rarely read directly) |
-| `maturity_levels` | display rubric descriptors and evidence criteria when scoring or uploading evidence |
-| `practice_dependencies` | currently empty in seed; safe to query |
-| `lifecycle_weights` | reference, rarely needed by frontend |
-
-### Organisation-scoped tables — read/write subject to RLS
-
-| Table | Frontend read | Frontend write |
+| Function | Method | When |
 |---|---|---|
-| `organizations` | own org only | UPDATE own org (e.g. revenue_range, employee_count) |
-| `users` | own org's users | not directly — use `create-organization` / `accept-invitation` |
-| `assessment_rounds` | own org's rounds | INSERT to start a new round |
-| `round_responses` | own org's responses | INSERT/UPDATE — upsert by (round_id, practice_id) |
-| `opi_scores` | own org's scores | **read-only** — only edge function `compute-opi` writes here |
-| `focus_portfolios` | own org's portfolios | **read-only** — only edge function `select-focus-portfolio` writes here |
-| `initiatives` | own org's initiatives | INSERT/UPDATE allowed |
-| `evidence` | own org's evidence (via initiative) | INSERT allowed; grading is via `grade-evidence` |
-| `score_change_requests` | own org's requests | INSERT/UPDATE for state transitions |
-| `approvals` | own org's approvals (via score_change_request) | INSERT allowed |
-| `meetings`, `kpis`, `adoption_metrics` | own org's | INSERT allowed |
-| `audit_log` | own org's audit entries | INSERT allowed but normally written by edge functions |
-| `invitations` | own org's invitations (to show pending list) | **never INSERT/UPDATE directly** — use edge functions |
+| `create-organization` | POST | First-time admin creates their org |
+| `determine-lifecycle` | POST | Onboarding step 2; or whenever revenue/headcount changes |
+| `compute-opi` | POST | After all 82-83 practices scored in a round |
+| `select-focus-portfolio` | POST | Quarterly, after compute-opi |
+| `grade-evidence` | POST | When a user clicks "Grade" on evidence |
+| `governance-report` | POST | When opening a governance view |
+| `chat-with-data` | POST | Chat input in Control Tower |
+| `invite-user` | POST | Admin invites a teammate |
+| `accept-invitation` | POST | Invited user clicks invite link, signs up, lands on accept page |
+| `delegate-questions` | POST | Admin delegates practices/pillars to third parties |
+| `submit-delegated-response` | POST | Anonymous assignee submits via share token |
 
-### Example: list practices grouped by area
+All called via `supabase.functions.invoke('<name>', { body: {...} })`. JWT is auto-attached except for `submit-delegated-response` (which uses the share_token instead).
+
+---
+
+## 6. Role-aware default Control Tower
+
+Each `company_members.role_lens` value drives the default tile selection on the Control Tower hero row:
+
+| `role_lens` | Default hero tiles |
+|---|---|
+| `ceo` | Pillar status strip + top 3 alerts + portfolio rollup (if applicable) + decisions this week |
+| `coo` | Initiative kanban summary + Delivery KPIs + cross-pillar blockers |
+| `cfo` | Cash + runway + margin + days AR + open audit findings |
+| `cro` | Pipeline + conversion + revenue forecast + customer NPS |
+| `chro` | Engagement + attrition + hiring pipeline + open positions |
+| `cio` | Uptime + open security incidents + IT spend vs budget + key system status |
+| `cmo` | Lead volume + brand health + active campaigns + CAC |
+| `legal` | Open compliance findings + risk register + open litigation + audit log |
+| `manager` | Their pillar drill-down + owned initiatives + pending evidence |
+| `viewer` | The CEO default (read-only) |
+
+Implementation: when fetching widgets for a Control Tower load, prefer widgets where `dashboards.role_default = <user's role_lens>`. Fallback to `dashboards.is_default = true`.
+
+---
+
+## 7. Realtime subscriptions
+
+For live tile updates (no polling). Subscribe to:
+- `metric_values` insert → re-render any tile bound to `metric_id`
+- `alerts` insert/update → update alert badge + recent activity
+- `audit_log` insert (filtered by company_id) → recent activity stream
+- `practice_assignments` update (filtered by company_id) → assignment_progress refresh
 
 ```typescript
-const { data: areas } = await supabase
-  .from('areas')
-  .select('id, name, sort_order, practices(id, name, sort_order)')
-  .order('sort_order');
-```
-
-### Example: upsert a score response
-
-```typescript
-const { error } = await supabase
-  .from('round_responses')
-  .upsert(
-    {
-      round_id,
-      organization_id, // from current user's row
-      practice_id,
-      importance_score, // 1..5
-      competency_score, // 1..5
-      responded_by: user.id,
-    },
-    { onConflict: 'round_id,practice_id' },
-  );
+const ch = supabase.channel('control-tower')
+  .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'metric_values', filter: `company_id=eq.${companyId}` }, refresh)
+  .subscribe();
 ```
 
 ---
 
-## 5. Edge functions reference
+## 8. Source-citing chat — UI requirements
 
-All edge functions live at:
-```
-{SUPABASE_URL}/functions/v1/{function-name}
-```
-
-The Supabase JS client wraps this:
+`chat-with-data` returns:
 ```typescript
-const { data, error } = await supabase.functions.invoke('compute-opi', {
-  body: { round_id, organization_id },
-});
-```
-
-The client adds the `Authorization: Bearer <jwt>` header automatically.
-
-### `create-organization`
-First-time setup for a freshly signed-up user. Creates an organisation and makes the caller its admin.
-
-| | |
-|---|---|
-| **Method** | POST |
-| **Auth** | required (JWT) |
-| **Caller** | must NOT already be in any org |
-| **Body** | `{ name: string, industry?: string, revenue_range?: string, employee_count?: number, years_in_operation?: number }` |
-| **Response** | `{ organization_id, organization_name, user_id, role: 'admin' }` |
-| **Errors** | 401 unauthenticated, 409 already in an org, 400 missing name |
-
-### `determine-lifecycle`
-Computes the org's lifecycle stage from revenue range and employee count. Updates `organizations.lifecycle_stage` if changed.
-
-| | |
-|---|---|
-| **Method** | POST |
-| **Auth** | required (JWT, member of org) |
-| **Body** | `{ organization_id: string }` |
-| **Response** | `{ organization_id, previous_stage, current_stage, changed: boolean, inputs: { revenue_range, employee_count } }` |
-
-### `compute-opi`
-Computes OPI scores for all practices in a round and writes them to `opi_scores`.
-
-| | |
-|---|---|
-| **Method** | POST |
-| **Auth** | required (JWT, member of org) |
-| **Body** | `{ round_id: string, organization_id: string }` |
-| **Response** | `{ organization_id, round_id, lifecycle_stage, lifecycle_mod, total_practices, phase_summary: { proof: number, structure: number, scale: number }, scores: OPIScore[] }` |
-| **Errors** | 400 if not all practices scored; 404 if round not found |
-
-After a successful call, frontend should read from `opi_scores` directly to display.
-
-### `select-focus-portfolio`
-Picks the practices to actively work on for a given quarter, applying WIP cap and selection rules.
-
-| | |
-|---|---|
-| **Method** | POST |
-| **Auth** | required (JWT, member of org) |
-| **Body** | `{ organization_id: string, round_id: string, quarter: string }` (quarter format: `'2026-Q2'`) |
-| **Response** | `{ organization_id, round_id, quarter, lifecycle_stage, max_active, selected_practices: [{ practice_id, practice_name, selection_reason, final_opi, phase_number }], initiatives_created: number }` |
-
-### `grade-evidence`
-AI-grades a piece of evidence against the practice's maturity rubric. Updates `evidence` and advances initiative status to `ai_pre_graded`.
-
-| | |
-|---|---|
-| **Method** | POST |
-| **Auth** | required (JWT, member of org) |
-| **Body** | `{ evidence_id: string }` |
-| **Response** | grading result with `rubric_mapping`, `completeness_score`, `quality_score`, `risk_flags`, `level_proposal`, `confidence`, `rationale`, `recommendation` |
-
-### `governance-report`
-Returns one of the three governance views.
-
-| | |
-|---|---|
-| **Method** | POST |
-| **Auth** | required (JWT, member of org) |
-| **Body** | `{ organization_id: string, view_type: 'executive' \| 'board' \| 'functional', user_id?: string, reporting_period?: string }` |
-| **Response** | view-specific summary (executive: active practices + risk alerts; board: area maturity + operating debt; functional: owned practices + pending evidence) |
-
-### `invite-user`
-Admin-only. Creates an invitation and emails the link via Resend.
-
-| | |
-|---|---|
-| **Method** | POST |
-| **Auth** | required (JWT, **role='admin'**) |
-| **Body** | `{ email: string, role: 'admin' \| 'leader' \| 'functional_lead' }` |
-| **Response** | `{ invitation_id, email, role, expires_at, email_sent: boolean }` — if `email_sent === false`, an `invite_url` is returned for fallback manual delivery |
-
-### `accept-invitation`
-Used by an invited user (just signed up via Supabase Auth) to claim their invitation and join an org.
-
-| | |
-|---|---|
-| **Method** | POST |
-| **Auth** | required (JWT, email must match invitation email) |
-| **Body** | `{ token: string }` (from the invite URL) |
-| **Response** | `{ user_id, organization_id, role }` |
-| **Errors** | 404 token not found, 410 expired or already accepted, 403 email mismatch, 409 user already in an org |
-
----
-
-## 6. RLS rules summary (what the frontend can/cannot do)
-
-- **Cross-org reads are impossible** — every organisation-scoped table filters by `organization_id = get_user_organization_id()` automatically.
-- **A user with no `users` row sees nothing** (apart from reference tables and their own `auth.users` record). This is the state immediately after sign-up; they must call `create-organization` or `accept-invitation` to get past it.
-- **`opi_scores` and `focus_portfolios` are read-only for the frontend.** Compute them via their respective edge functions.
-- **`invitations` cannot be written via PostgREST.** Use `invite-user` and `accept-invitation`.
-- **`audit_log` is intentionally append-only** — frontend can SELECT and INSERT but never UPDATE/DELETE.
-
----
-
-## 7. Error handling
-
-Standard pattern from the Supabase JS client:
-
-```typescript
-const { data, error } = await supabase.from('round_responses').insert(...);
-if (error) {
-  // error.code, error.message, error.details
+{
+  conversation_id: string;
+  text: string;                     // may contain [src:<id>] inline citations
+  vega_spec: object | null;         // optional Vega-Lite chart
+  citations: Array<{ kind: string; id: string; description: string }>;
+  stripped_unsupported_numbers: number;  // count of hallucinated numbers removed
 }
 ```
 
-For edge functions:
-
-```typescript
-const { data, error } = await supabase.functions.invoke('compute-opi', { body });
-if (error) {
-  // error.context contains the HTTP response
-}
-```
-
-Common errors and how to surface them:
-
-| HTTP | Meaning | UI suggestion |
-|---|---|---|
-| 401 | Not authenticated | Bounce to sign-in screen |
-| 403 | RLS denied or role insufficient | "You don't have permission for that" |
-| 404 | Resource not found | "Not found" toast or redirect |
-| 409 | Conflict (already exists, already in an org) | Show specific message |
-| 410 | Gone (invite expired or used) | "This invitation is no longer valid" |
-| 500 | Server error | "Something went wrong, try again" |
+UI rules:
+- Render `text` with `[src:abc-123]` rewritten as a clickable citation chip
+- If `vega_spec` is set, render with `vega-embed` or `react-vega` below the text
+- If `stripped_unsupported_numbers > 0`, show a small confidence indicator: "AI flagged some claims it couldn't verify"
+- "Save chart to dashboard" button (v1.1) → INSERT a row in `widgets` with `type: 'vega_spec'` and `vega_spec` jsonb
 
 ---
 
-## 8. What the frontend should NEVER do
+## 9. What Lovable should NEVER do
 
-- Write directly to `opi_scores`, `focus_portfolios`, or `invitations`.
-- Bypass `create-organization` by inserting into `organizations` and `users` directly. (RLS allows the org INSERT for owner self-creation in some patterns, but the `users` insert links to `auth.users`, and doing both client-side risks orphaned rows on partial failure.)
-- Hard-code `organization_id` from the URL or local storage. Always read it from the authenticated user's `users` row.
-- Cache JWTs anywhere except the Supabase client's built-in storage.
-- Try to call edge functions without an Authorization header.
+- Write directly to `opi_scores`, `focus_portfolios`, `audit_log`, `chat_messages` from the frontend. Always go through edge functions.
+- Bypass `create-organization` by inserting `companies` + `company_members` directly. (The edge function handles partial-failure rollback.)
+- Hard-code `company_id` from the URL or local storage. Always read from the current `company_members` row.
+- Cache JWTs anywhere except the Supabase JS client's built-in storage.
+- Show numbers from chat responses without their `[src:<id>]` citations resolved.
 
 ---
 
-## 9. When this contract changes
+## 10. When this contract changes
 
-Updates to this file happen when:
+Updates happen when:
 - A migration adds/changes a table or column
 - An edge function gains/loses a parameter
-- An RLS rule changes
-- The user journey adds a step
+- A surface's spec evolves
 
 Workflow:
-1. The change lands in this repo.
-2. `src/types/Database.ts` is regenerated.
+1. Change lands in `bds-OS`.
+2. `src/types/Database.ts` is updated.
 3. This file is updated.
-4. The user pastes the diff (or the whole updated section) into Lovable's chat with the prompt: *"Update the frontend to match this contract change."*
+4. The diff is pasted into Lovable's chat: *"Update the frontend to match this contract change: [diff]"*
 5. Lovable rebuilds the affected screens.
 
-That's the whole sync loop.
+That's the entire sync loop.

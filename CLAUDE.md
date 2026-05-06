@@ -111,26 +111,42 @@ npm run db:migrate                # supabase migration up
 npm run functions:serve           # supabase functions serve (local edge functions)
 ```
 
-## Where we are right now (as of 2026-05-04)
+## Where we are right now (as of 2026-05-06)
 
-- Backend: ~80% ready for v1. Engines, schema, seeds, edge functions all in place.
-- Frontend: built in Lovable, lives in `wbardawil/strategy-spark-86`, integration into
-  `apps/web/` via `chore/integrate-lovable` branch is in progress.
-- v1 blocker status (full spec in `docs/v1-plan.md`):
-  1. Team-invitation flow: backend done (`invitations` table + `invite-user` and
-     `accept-invitation` edge functions, with Resend email delivery on `invite-user`).
-     Frontend wiring still needed in Lovable.
-  2. "Compass" landing page: not started (Lovable).
-  3. Onboarding / empty states / rubric tooltips: not started (Lovable).
-- Pre-v1 hygiene from `docs/external-patterns-review.md`:
-  - Audit log migration (A1): done — `20260504000001_create_audit_log.sql`.
-    Edge functions need to start writing entries on score-change approvals,
-    evidence grading, initiative status transitions.
-  - Minimal CI gate (A4): done — `.github/workflows/gate.yml` runs typecheck
-    and trufflehog secret scan on every PR to main.
-- Known backend gaps for v1.1+: round-over-round trends (placeholder in
-  `src/engines/operating-debt.ts:122`), weekly digest, practice
-  dependencies seed.
+- **Backend v1 — code complete**. All migrations, seeds, edge functions, CI/CD,
+  and observability committed on `claude/promote-assessments-P5G00`.
+  - 7 framework migrations (`20260506000001-7`): schema + RLS + 4 templates +
+    600 maturity rubrics + ops webhook triggers + practice_assignments
+  - 11 edge functions: compute-opi, select-focus-portfolio, grade-evidence,
+    governance-report, determine-lifecycle, invite-user, accept-invitation,
+    create-organization, chat-with-data, delegate-questions,
+    submit-delegated-response. Plus shared/sentry.ts helper.
+  - CI/CD: `.github/workflows/{gate,deploy,mirror-frontend}.yml`
+  - Adapter: `src/adapters/lovable-jsonb-to-opi-input.ts`
+  - Canonical types: `src/types/Database.ts` (matches the post-migration schema)
+- **Pending: infrastructure setup (you, browser tasks ~2 hours)**.
+  See `docs/architecture.md` "GitHub Actions secrets needed" + the migration
+  steps in `docs/pilot-plan.md`. Day-by-day plan: 15 days from architecture
+  setup to beta launch.
+- **Pending: Lovable iteration (you prompt, Lovable builds)**.
+  `docs/frontend-contract.md` is the paste-ready contract for Lovable —
+  schema, surfaces to build, edge functions to call, role-aware tower
+  patterns, source-citing chat UI rules.
+- **Pending: deletion of superseded branch**. `claude/integrate-frontend-backend-kVV84`
+  on origin is from before the architecture lock. Useful jsonb adapter cherry-picked.
+  Delete via GitHub UI when convenient.
+
+## Known v1.1+ backlog
+- Round-over-round trends (placeholder in `src/engines/operating-debt.ts:122`)
+- Weekly digest email
+- Save-chart-to-dashboard from chat
+- Drag-and-drop dashboard mosaic
+- Custom pillar UI (merge / split / hide / add)
+- Three separate governance views (executive / board / functional)
+- Decision-log dedicated UI
+- Maturity rubrics for long-tail practices
+- Generic webhook ingest for Zapier/Make
+- Native connectors (Stripe, HubSpot, etc.)
 
 ## When picking up work
 
