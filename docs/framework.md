@@ -180,20 +180,73 @@ The framework itself is MECE. Two execution surfaces (stakeholder grid, comms te
 
 ---
 
-## Where customisation lives
+## Where customisation lives — the two-tier pillar model
+
+The framework distinguishes between **universal pillars** (platform-locked, 8, MECE — used for cross-company benchmarking and analytics) and **customer pillars** (per-tenant, fully customisable — what the customer's leadership team sees in the UI).
+
+```
+┌──────────────────────────────────────────────────────────┐
+│ Tier 1 — UNIVERSAL pillars (8, locked, MECE)             │
+│ Direction / Customer / Delivery / Economics /            │
+│ People / Technology / Governance / Innovation            │
+│ Used for: cross-tenant benchmarking, template seeding,   │
+│ fund-level rollups, comparison.                          │
+└──────────────────────────────────────────────────────────┘
+                       ▲ each customer pillar maps to one
+                       │ universal pillar (M:1; "Other" allowed)
+┌──────────────────────────────────────────────────────────┐
+│ Tier 2 — CUSTOMER pillars (per-tenant, fully editable)   │
+│ Display labels, count, ordering, additions, removals.    │
+│ This is what their leadership team sees.                 │
+└──────────────────────────────────────────────────────────┘
+                       ▲ each practice/KPI tagged to a
+                       │ customer pillar
+┌──────────────────────────────────────────────────────────┐
+│ Tier 3 — Practices, KPIs, dashboards (fully editable)    │
+└──────────────────────────────────────────────────────────┘
+```
+
+### What customers can do
+
+| Modification | Allowed | Mechanism |
+|---|---|---|
+| **Rename** a pillar (e.g., "Customer" → "Patient") | ✅ | Display label on customer pillar; universal mapping unchanged |
+| **Merge** pillars (e.g., Customer + Innovation → "Stakeholder & Growth") | ✅ | One customer pillar maps to two universals; aggregate cleanly |
+| **Split** a pillar (e.g., People → Talent + Culture) | ✅ | Two customer pillars, both mapping to universal People |
+| **Add a custom pillar** (e.g., "Sustainability" / "Patient Safety" / "Research") | ✅ | Must declare which universal pillar it maps to, or `Other` |
+| **Hide / remove a pillar** from their UI | ✅ | Customer pillar deactivated; universal still exists |
+| **Edit / drop / add practices and KPIs** | ✅ | Tier 3 has no restrictions |
+| **Edit pillar names that other customers see** | ❌ | Customer changes are tenant-only |
+| **Edit the 8 universal pillars** | ❌ | Platform-level evolution only, versioned |
+
+### What stays locked
+
+The 8 universal pillars themselves cannot be modified by a customer. They are the MECE backbone that:
+- Lets templates be re-used across customers (template practices are tagged to universals, then materialised into customer pillars)
+- Enables fund-CEO portfolio rollups across companies that may have different customer pillar layouts
+- Allows industry benchmarks to be computed across tenants
+- Ensures analytics and AI features (chat, NL query) have a stable taxonomy to reason against
+
+When a customer's modifications produce content that doesn't fit any universal pillar (e.g., a concept genuinely outside the 8), it tags to `Other`. If `Other` stays small, it's customer-specific. If `Other` grows large across the customer base, that's a signal the universal framework needs to evolve — handled via versioned releases of the universal pillar set, with explicit opt-in migration.
+
+### Default state for new customers
+
+When a customer signs up: customer pillars = the 8 universals (1:1, same labels). They can rename / merge / split / add from there. **Most customers won't need to** — the defaults work. The customisation exists for the cases where it doesn't.
+
+## Customisation cheat sheet
 
 | What's customisable | Per-customer | Per-template | Default |
 |---|---|---|---|
-| Pillar names (display) | Yes (cosmetic — they can call "Customer" "Patient" or "Student") | Yes | "Direction / Customer / Delivery / Economics / People / Technology / Governance / Innovation" |
-| Pillar order in UI | Yes | Yes | Default order matches the table above |
-| Practices per pillar | Yes (add / drop / edit) | Yes (suggests starting set) | Empty |
-| KPIs per pillar | Yes (add / drop / edit) | Yes (suggests starting set) | Empty |
-| KPI thresholds (red / yellow / green) | Yes (per metric) | Yes (suggests defaults) | None |
-| KPI source (manual / webhook / connector) | Yes (per metric) | — | Manual |
-| Lifecycle weights (OPI) | Yes (per company; can override pillar weighting) | Yes (suggests by lifecycle stage) | bds-OS defaults |
-| Maturity rubrics (5 levels per practice) | Yes (edit any level) | Yes (suggests starting rubric) | None until M5 (evidence loop) |
-
-The pillars themselves — the 8 of them — are **not customisable**. That's the only fixed thing. Everything inside is the customer's call.
+| Pillar labels (display) | ✅ | ✅ | Universal pillar names |
+| Pillar count (merge / split / add / hide) | ✅ | ✅ (template can suggest non-default layout) | 8 (1:1 with universals) |
+| Pillar order in UI | ✅ | ✅ | Default order |
+| Practices per pillar | ✅ (add / drop / edit) | ✅ (suggests starting set) | Empty |
+| KPIs per pillar | ✅ (add / drop / edit) | ✅ (suggests starting set) | Empty |
+| KPI thresholds (red / yellow / green) | ✅ (per metric) | ✅ (suggests defaults) | None |
+| KPI source (manual / webhook / connector) | ✅ (per metric) | — | Manual |
+| Lifecycle weights (OPI) | ✅ (per company) | ✅ (suggests by lifecycle stage) | Defaults |
+| Maturity rubrics (5 levels per practice) | ✅ (edit any level) | ✅ | None until M5 (evidence loop) |
+| Universal pillars themselves | ❌ | — | Fixed at platform level |
 
 ---
 
