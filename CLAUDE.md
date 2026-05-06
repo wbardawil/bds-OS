@@ -140,8 +140,11 @@ npm run functions:serve           # supabase functions serve (local edge functio
 7. Read `docs/integration-plan.md` for the longer-horizon roadmap.
 8. Read `docs/lovable-state.md` for what Lovable shipped (schema, journey).
 9. Read `docs/about.md` for the product summary and ICP.
-10. `docs/how-it-works.md`, `docs/v1-plan.md`, `docs/frontend-contract.md`, and
+10. Read `docs/csio-fit-mece.md` — final synthesis showing the platform covers
+    the CSIO's role end-to-end across daily / weekly / quarterly cadences,
+    cross-referenced with the ICP value proposition.
+11. `docs/how-it-works.md`, `docs/v1-plan.md`, `docs/frontend-contract.md`, and
     `src/types/Database.ts` are partially obsolete after the architecture lock —
     update when their relevant migrations / specs land.
-11. `git log --oneline -20` on the active branch for recent context.
-12. Confirm with the user before doing anything destructive or visible (push, PR, comment).
+12. `git log --oneline -20` on the active branch for recent context.
+13. Confirm with the user before doing anything destructive or visible (push, PR, comment).
