@@ -466,6 +466,64 @@ This is **only possible because of F1 (own Supabase) + F2 (monorepo) + F3 (CI/CD
 
 ---
 
+## Risk register (consolidated)
+
+Known risks, likelihood, impact, mitigation, owner. Reviewed weekly during beta.
+
+| # | Risk | L | I | Mitigation | Owner |
+|---|---|---|---|---|---|
+| **R1** | Lovable Cloud → own Supabase migration loses data or breaks Lovable's UI | M | H | Migrate during low-activity window; verify Lovable functions against new project; keep Lovable Cloud accessible as rollback for 7 days | You |
+| **R2** | Mirror cadence (5 min) makes Lovable changes feel slow to deploy | L | L | Acceptable for pilot; switch to webhook-triggered later | Me |
+| **R3** | Chat hallucination passes the numeric validator | L | H | Validator strips numbers not in snapshot; system prompt explicit; manual QA 50 questions before beta launch; add `[unverified]` indicator on suspicious outputs | Me |
+| **R4** | RLS bug leaks cross-tenant data | L | Critical | All RLS policies tested before beta; pen-test with 2 test orgs; audit log enabled; manual SQL injection test on every endpoint | Me |
+| **R5** | Vega-Lite chart spec malformed; render breaks | M | L | Try/catch in frontend; fallback to text-only response; log to Sentry | Me |
+| **R6** | Anthropic API cost spike (recursive chat or abuse) | M | M | Per-user daily token quota; Sentry alert at $50/day spend; chat conversation length cap | Me |
+| **R7** | Beta customer doesn't engage (assessment incomplete by Day 17) | M | H | Day-13 check-in; offer to do assessment together via screenshare; reduce friction by pre-populating template | You |
+| **R8** | Maturity rubrics feel generic / wrong for industry | M | H | Author with industry-specific framework refs (Joint Commission, accreditation rubrics); review with each beta during Day 14 customisation | Me |
+| **R9** | Solo operator burnout / single point of failure | M | M | Documentation discipline (CLAUDE.md as institutional memory); Claude Code can manage routine ops post-launch | You |
+| **R10** | Lovable changes pricing / shutters platform | L | H | Own GitHub repo retains all source; can rebuild on standard React stack if forced | You |
+| **R11** | Migration script fails mid-deploy | L | M | Migrations idempotent; `IF NOT EXISTS` everywhere; test in staging Supabase project first; CI pipeline aborts on first failure | Me |
+| **R12** | Customer reports a critical bug Friday evening | M | M | Sentry → Slack push notifications; rollback runbook; "ack the alert from phone" workflow tested before beta | You |
+| **R13** | Chat returns inappropriate content (despite Claude's safety) | L | M | System prompt scope-bounded to operating data; refuse off-topic; flag any unsafe response to ops channel | Me |
+
+L (Likelihood) / I (Impact): L=Low, M=Medium, H=High.
+
+---
+
+## Security posture
+
+### Multi-tenancy
+- RLS on every customer-owned table via `is_member_of(_company_id)` and `is_admin_of(_company_id)` helper functions
+- Reference data (`universal_pillars`, `templates`) is read-only for authenticated users; not modifiable via PostgREST
+- Service-role operations (edge functions writing to `chat_messages`, audit log) are intentional and bypass RLS
+
+### Data ownership
+- All customer data lives in their tenant rows in our Supabase
+- Customer-initiated **export**: a "download my data" edge function (v1.1) generates a JSON dump of all rows owned by their company. v1: Supabase support ticket can do this.
+- Customer-initiated **deletion**: `DELETE FROM companies WHERE id = ?` cascades through all foreign keys (RLS cascades configured). 30-day soft-delete window before permanent purge — v1.1.
+
+### Sensitive-domain pilots — explicit position
+- **Hospital pilot (HIPAA implications)**: the platform stores **assessment scores, KPI values, and free-text notes** at the company level. **PHI (patient health information) is NOT supposed to enter the system.** Customer-facing constraint:
+  - Terms of Service and onboarding explicitly forbid entering PHI in evidence descriptions or chat queries
+  - UI placeholders prompt for **aggregate / process / outcome metrics** — not patient identifiers
+  - Audit log captures any free-text content; we monitor for accidental PHI in beta and fix patterns
+  - **We do NOT pursue HIPAA BAA with Supabase or full HIPAA-compliant infrastructure for v1**. If a hospital customer requires HIPAA scope, we revisit (Supabase has a HIPAA-eligible Pro tier; cost ~$599/mo).
+- **University pilot (FERPA implications)**: same structure. Student PII not supposed to enter the system. Same UI guardrails + ToS.
+- **All pilots**: encrypted at rest (Postgres default), encrypted in transit (HTTPS only), secrets in Supabase Vault.
+
+### Compliance posture
+- **SOC 2**: not pursued for v1. Revisit when first paying customer asks (likely v1.5 or later).
+- **GDPR**: data export + deletion in v1.1; basic ToS lays foundation.
+- **Audit log**: ✅ in v1 from day 1.
+
+### What we explicitly DON'T do (security posture)
+- We don't run pen-testing in v1 beyond manual RLS verification
+- We don't pursue ISO 27001 / SOC 2 / HIPAA infrastructure pre-paying-customers
+- We don't build customer-managed encryption keys (Supabase default encryption is sufficient for v1)
+- These are explicit "not yet" — to be revisited when a paying customer demands it
+
+---
+
 ## Open architectural decisions still pending
 
 These are smaller calls we'll make as we execute, recorded here for future-session continuity:

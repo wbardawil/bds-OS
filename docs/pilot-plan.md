@@ -223,6 +223,97 @@ If two or more risks fire, Day 15 launch becomes Day 16 or 17. Acceptable — be
 
 ---
 
+## Beta Onboarding Playbook (Day 15+)
+
+What actually happens on Day 15 and the weeks after.
+
+### Day 15 — launch
+
+**Before sending invitations, you have ready:**
+- Beta agreement (1-page light NDA + feedback expectations) — sign via DocuSign or simple email confirmation
+- Walkthrough video (10 min, recorded) covering: sign up → assess → see results → use chat
+- Calendly link for the weekly beta call
+
+**Send invitations to:**
+- Fund X: fund CEO + 3 fund team members (CFO, COO, IR)
+- Hospital Y: hospital CEO + 5 leaders (COO, CMO, CFO, CHRO, CIO/Director of Quality)
+- University Z: university President + 5 leaders (Provost, VPs of Finance / Student Affairs / HR / IT)
+
+**Expectations communicated**:
+- Complete first assessment within 7 days (Day 22)
+- Use the platform at least 3× in week 1
+- Submit feedback via in-app widget when something's off
+- Attend weekly call (or async video update if can't make it)
+
+### Days 15–21 (Week 1)
+
+**Daily** (you, ~30 min):
+- Review `feedback` table for new entries
+- Check Sentry for errors
+- Spot-check chat outputs in `chat_messages` for hallucinations
+- Acknowledge anything in Slack ops channel
+
+**Weekly Monday call** (you + each beta team, 30 min each):
+- What did you use? What didn't you?
+- What was confusing?
+- What's missing that's blocking you?
+- Capture in friction log; turn into commits within 48h
+
+### Days 22–30 (Week 2)
+
+- All assessments should be complete by Day 22
+- Daily monitoring continues
+- Weekly calls continue
+- Iterate on top 3 friction items per beta
+
+### Day 30 — first PMF survey
+
+Sean Ellis question via in-app form: *"How would you feel if you could no longer use this platform?"*
+- Very disappointed / Somewhat disappointed / Not disappointed / N/A
+- Plus 3 open-ended: primary benefit, who benefits most, top improvement
+
+**Success criteria at Day 30**:
+- ≥ 80% of invited leaders completed the assessment (12 of 15)
+- ≥ 1 of 3 betas marks "very disappointed" on PMF (PMF anchor)
+- Friction log is shrinking week over week (issues resolved faster than new ones surface)
+- At least one beta has independently invited their board / additional team member
+
+If success criteria miss: post-mortem; identify which dimension is failing (assessment? control tower? chat?); narrow scope or adjust UX.
+
+### Days 31–90 (Months 2–3)
+
+- Move to bi-weekly calls (or monthly if engagement is high)
+- Ship v1.1 features informed by feedback (priority order: save-widget+mosaic, custom pillar UI, decision-log surface, board-pack export, native Stripe / HubSpot connector)
+- Run second PMF survey at Day 90
+
+### Beta-team commitment in writing
+
+The light beta agreement covers:
+- **Free use of the platform** during the beta period (60–90 days)
+- **Feedback obligation** — at minimum the weekly call + in-app feedback when usage friction is encountered
+- **NDA** — they don't share platform features publicly until we've signed off
+- **Co-marketing right** — we can quote anonymised feedback in case studies (with explicit approval)
+- **Pricing transparency** — paid pricing for v1.5+ disclosed upfront so betas can decide whether to convert
+
+### What beta teams should NEVER need to do
+- Run any CLI / SQL / shell command
+- Configure anything outside the platform
+- Set up integrations (we set up integrations on their behalf if they want them; v1.1+)
+- Train other team members beyond their leadership team
+
+### Walkthrough video script (10 min, you record once per beta)
+
+1. Sign up + welcome (1 min)
+2. Pick your industry template OR start from scratch (1 min)
+3. Customise pillars and practices for your context (2 min)
+4. Score your first practice (importance × competency) (1 min)
+5. Open the Control Tower — interpret the tiles, the radar, the alerts (2 min)
+6. Use chat: ask "where are we strongest / weakest" (1 min)
+7. Save a chart from chat to your dashboard (v1.1 feature; in v1: just point at the structure) (1 min)
+8. Where to give feedback / how the weekly call works (1 min)
+
+---
+
 ## What this plan supersedes
 
 - The 9-day version of this plan (committed earlier today) — replaced by this 15-day version that includes architecture pre-work + chat with charts + maturity rubrics + source-citing.

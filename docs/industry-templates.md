@@ -9,6 +9,93 @@ Each template provides:
 - ~3–4 suggested KPIs per pillar (so ~25–30 metrics total)
 - Multi-site practices tagged `*.system.*` for organisations that operate multiple facilities or campuses
 
+## Practice ID naming convention
+
+All practice IDs follow: `<template-id>.<pillar-code>.<sequence>` plus optional `.system` flag for multi-site practices.
+
+- `<template-id>`: matches `templates.id` — `smb-default | hospital | university | fund`
+- `<pillar-code>`: matches `universal_pillars.code` — `direction | customer | delivery | economics | people | technology | governance | innovation`
+- `<sequence>`: 1-indexed within (template, pillar)
+- `.system.<n>`: multi-site / system-level practice (only present where applicable)
+
+**Examples**:
+- `hospital.delivery.1` — first Delivery-pillar practice for the hospital template
+- `hospital.delivery.system.1` — first system-level (cross-facility) Delivery practice
+- `university.customer.7` — seventh Customer-pillar practice for the university template
+- `fund.economics.3` — third Economics practice for the fund template
+
+**Lovable's existing 83 practices** keep their original IDs (`it_1`, `kpi_okr_3`, etc.) for backward compatibility. They're additionally tagged with `smb-default.<pillar-code>.<n>` via the `external_id` column for cross-template referencing.
+
+This convention enables cross-template comparisons ("show me how hospitals score on Customer pillar practices vs universities"), benchmark queries, and stable references in code / chat citations.
+
+## Rubric authoring style guide
+
+Each practice has 5 maturity levels. Levels follow a consistent progression and tone:
+
+### Level naming convention (universal across templates)
+
+| Level | Name | What it indicates |
+|---|---|---|
+| **1** | **Emerging** | The practice is unstructured or absent; ad-hoc when present; no documentation |
+| **2** | **Formalising** | The practice is documented but not consistently followed; reactive |
+| **3** | **Measuring** | The practice is documented, followed, and measured; some KPIs exist |
+| **4** | **Optimising** | The practice is measured, benchmarked externally or internally, and continuously improved |
+| **5** | **Innovating** | The practice is leading; sets standards others follow; integrates emerging methods |
+
+These names are universal — the **content** at each level varies per practice and per industry.
+
+### Tone and structure
+
+Each `maturity_rubrics` row has two fields:
+- `descriptor` (1–2 sentences): what the company **does** at this level. Present tense, factual, observable.
+- `evidence_criteria` (1–2 sentences): what would **prove** this level. Concrete artefacts, measurements, or behaviours.
+
+**Style rules**:
+- Present tense, third person ("the organisation does X")
+- Avoid jargon; use industry-relevant terms but framework-neutral structure
+- Each level is **additive** — Level 5 implies Level 4 implies Level 3 (don't restate lower-level criteria)
+- Evidence criteria should be **observable** by an outside reviewer (e.g. document, KPI report, observation in a meeting), not inferred
+- Keep `descriptor` ≤ 30 words; `evidence_criteria` ≤ 25 words
+- Never reference time periods longer than a year (e.g. don't say "10-year strategy") unless the practice is genuinely long-horizon
+
+### Example — for `hospital.delivery.1` (ED throughput)
+
+| Level | Descriptor | Evidence criteria |
+|---|---|---|
+| 1 | ED patient flow is not measured; throughput depends on shift staffing and luck. | No published door-to-doctor or door-to-disposition metrics; no flow huddle |
+| 2 | Door-to-doctor and door-to-disposition times are tracked but not actively managed; no targets | Monthly metric report exists; targets not documented |
+| 3 | Throughput targets are set, monitored monthly, and discussed in operations review | Documented targets; monthly review minutes; charge-nurse flow huddle |
+| 4 | Targets are benchmarked against peer hospitals; throughput improvement initiatives are quarterly | External benchmark report; quarterly improvement plan with measurable goals |
+| 5 | Predictive analytics anticipate surges; pre-emptive staffing and pathways are deployed; cited as a model by peers | ML/analytics dashboard; peer-recognised process (case study, conference talk) |
+
+### Expiry-period hint
+
+Some maturity claims have natural decay — annual training compliance, biennial accreditation cycles, etc. The `maturity_rubrics.expiry_period_days` column captures this; v1.1 surfaces it in the UI as a "this evidence expires in N days" indicator.
+
+### What NOT to do in rubric authoring
+
+- ✗ Don't use marketing language ("world-class", "best-in-class")
+- ✗ Don't conflate maturity with effort ("works very hard on" is not a maturity descriptor)
+- ✗ Don't write criteria that can only be assessed by the practitioner ("the team feels good about it")
+- ✗ Don't reference specific tools or vendors (rubrics outlive vendor choices)
+- ✗ Don't make Level 5 unreachable — at least one company in the wild should already operate there
+
+### Authoring scope for v1
+
+Top 5 practices per pillar per template = 5 × 8 = 40 practices × 5 rubric entries = 200 rubric rows per template. For the 3 beta templates (hospital, university, fund) = 600 rubric rows total in v1.
+
+The remaining practices in each template fall back to a generic rubric that customers can edit:
+
+| Level | Generic descriptor | Generic evidence |
+|---|---|---|
+| 1 | Practice is informal, undocumented, or absent | No documented evidence |
+| 2 | Practice is documented but not consistently followed | Documentation exists; usage inconsistent |
+| 3 | Practice is documented, followed, and measured | Documented + measurement KPI exists |
+| 4 | Practice is benchmarked and continuously improved | Benchmark + improvement plan |
+| 5 | Practice is leading and shared externally | Industry recognition (case study, talk, framework contribution) |
+
+---
+
 References behind these templates:
 - **Hospital**: Joint Commission, Magnet, HFMA, HCAHPS, AHA leadership competencies, AHRQ
 - **University**: SACSCOC / MSCHE / regional accreditation, AGB governance, NACUBO finance, IPEDS, Title IX/FERPA
