@@ -136,6 +136,71 @@ This is the **canonical architecture reference**. When in doubt about how the sy
 - **Custom op events** — append to `audit_log`; high-severity events trigger Slack via a database trigger calling a webhook edge function.
 - **Status page** — `/admin/status` shows last deploy, recent error count, latest customer feedback count, active alerts count. One mobile-bookmarkable URL.
 
+#### Sentry web SDK setup (in `apps/web/`)
+
+The Lovable app needs Sentry initialised once at boot. Spec for Lovable to implement (paste this into Lovable's chat):
+
+```typescript
+// In src/main.tsx (or equivalent boot file)
+import * as Sentry from '@sentry/react';
+
+Sentry.init({
+  dsn: import.meta.env.VITE_SENTRY_DSN,
+  environment: import.meta.env.MODE,
+  integrations: [Sentry.browserTracingIntegration(), Sentry.replayIntegration()],
+  tracesSampleRate: 0.1,
+  replaysSessionSampleRate: 0.1,
+  replaysOnErrorSampleRate: 1.0,
+});
+```
+
+Add `VITE_SENTRY_DSN` to Lovable's env vars (and to Vercel project env vars).
+
+#### Sentry edge function SDK setup
+
+Each edge function imports a small wrapper. Add to `supabase/functions/shared/sentry.ts`:
+
+```typescript
+import * as Sentry from 'https://deno.land/x/sentry@7.x.x/index.mjs';
+
+const dsn = Deno.env.get('SENTRY_DSN_EDGE');
+if (dsn) {
+  Sentry.init({
+    dsn,
+    environment: Deno.env.get('SUPABASE_PROJECT_REF') ?? 'unknown',
+    tracesSampleRate: 0.1,
+  });
+}
+
+export function captureError(err: unknown, context?: Record<string, unknown>) {
+  if (dsn) {
+    Sentry.captureException(err, { extra: context });
+  } else {
+    console.error('captureError (no Sentry):', err, context);
+  }
+}
+```
+
+Each edge function wraps its main handler with try/catch + `captureError`. Set `SENTRY_DSN_EDGE` via `supabase secrets set` from CI or via the Supabase dashboard → Edge Functions → Secrets.
+
+#### Slack/Discord webhook (DB trigger)
+
+Implemented in migration `20260506000006_ops_notifications.sql` (✅ committed). Triggers fire on:
+- Critical alerts (`alerts.severity = 'critical'`)
+- New feedback submissions (`feedback` insert)
+- Score-change requests entering `pending` state
+
+Webhook URL is stored as a Supabase Vault secret named `ops_webhook_url`. Setup is one SQL statement in Supabase SQL editor:
+
+```sql
+SELECT vault.create_secret(
+  'https://hooks.slack.com/services/T.../B.../xxx',  -- your webhook URL
+  'ops_webhook_url'
+);
+```
+
+Failures in the webhook call do not block the underlying transaction (the trigger function catches and logs).
+
 ### External services
 - **Anthropic API** — `claude-sonnet-4-6` (or current Claude model) for chat-with-data. Called from `chat-with-data` edge function. API key in Supabase Vault.
 - **Resend** — invitation emails, weekly digest. Free tier (3000/month) sufficient for beta.
