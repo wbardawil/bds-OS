@@ -1,199 +1,103 @@
 # BDS OS — Integration Plan
 
-How we turn `bds-OS` (the design / IP repo) and `wbardawil/strategy-spark-86` (the running Lovable app on Lovable Cloud) into one coherent product. This is the active plan. All previous frontend/backend planning docs (`docs/v1-plan.md`, `docs/frontend-contract.md`, `src/types/Database.ts`) were written before we learned what Lovable actually built — they reflect bds-OS's original schema, not the integrated reality, and need to be revised as we execute this plan.
+How we turn `bds-OS` (the design / IP repo) and `wbardawil/strategy-spark-86` (the running Lovable app on Lovable Cloud) into one coherent product. This is the active plan.
+
+---
+
+## Status update — 2026-05-08 (evening)
+
+After a closer audit of `data/practice-metadata.json` and `data/maturity-levels.json` in this repo:
+
+- **All 82 bds-OS practices have fully calibrated metadata** (P&L impact, speed-to-impact, dependency, risk floor + level). Real values, not placeholders.
+- **All 82 practices have full 5-level maturity rubrics** authored (descriptor + evidence criteria + refresh cadence). 410 entries total.
+- **The OPI engine, Focus Portfolio engine, and supporting UI are built** (M1–M4 on `claude/integrate-frontend-backend-kVV84`).
+
+This means the gap to deliver "ranked by P&L impact, speed, dependency, and risk" credibly is **much smaller than initially estimated**. The work is **mapping**, not authoring from scratch.
+
+See `data/lovable-question-mapping.json` for the 75-row mapping from Lovable's `question_id` to the closest bds-OS `practice_id`.
 
 ---
 
 ## Decisions made (durable)
 
-These are settled. Don't re-litigate without explicit user approval.
-
 | # | Decision | Rationale |
 |---|---|---|
-| **D1** | **Lovable Cloud is the canonical backend.** No own Supabase project. | Already running, no migration risk, Lovable handles edge functions and migrations through its UI. |
-| **D2** | **Lovable's schema is the canonical schema.** `companies`, `company_members`, `evaluation_rounds`, `round_responses`, `profiles`, `leads` stay as they are. | Already in production with real data. bds-OS's renamed migrations would have been net-new anyway. |
-| **D3** | **Lovable's 8 categories are canonical** (`strategic_planning`, `management`, `kpi_okr`, `operations`, `human_resources`, `it`, `market_intelligence`, `sales_marketing`). bds-OS's `data/areas.json` (8 different functional areas) is **deprecated**. | Already in production. Reconciliation effort would be high with no user benefit. |
-| **D4** | **Lovable's 83 practices in `src/data/questions.ts` are canonical.** bds-OS's `data/practices.json` (82 different practices) is **deprecated**. | Same as above. |
-| **D5** | **`round_responses.category_scores` jsonb shape stays.** No migration to per-practice rows. | Lovable's frontend already reads/writes this shape; changing it breaks shipped UI. bds-OS engines will read jsonb via an adapter. |
-| **D6** | **Both OTV and OPI ship as complementary lenses.** | OTV (Clarity / Speed / Skills / Commitment) is the narrative dashboard; OPI is the action priority list. They serve different purposes. |
-| **D7** | **`bds-OS` is the design / IP repo. `strategy-spark-86` is the deployed code.** | Two repos coexist. Sync via design specs Lovable consumes. |
-| **D8** | **Sync mechanism: Lovable consumes specs from `bds-OS` via paste.** | We don't have direct write access to `strategy-spark-86` from this session (MCP scope is `bds-OS` only). All Lovable changes happen via prompts the user pastes. |
-
----
-
-## Architecture (the integrated product)
-
-```
-   Visitor / friend / team member browser
-                 │
-                 ▼
-        Lovable's frontend                          (lives in strategy-spark-86)
-        (existing screens + new
-         OPI / portfolio / evidence
-         / governance screens)
-                 │
-                 ▼ Supabase JS client
-        Lovable Cloud (managed Supabase)
-        ├── Existing tables                         (companies, company_members,
-        │                                            evaluation_rounds, round_responses,
-        │                                            profiles, leads)
-        ├── NEW tables (added via Lovable Cloud)    (lifecycle_weights, opi_scores,
-        │                                            focus_portfolios, initiatives,
-        │                                            evidence, score_change_requests,
-        │                                            approvals, audit_log,
-        │                                            invitations, maturity_rubrics)
-        ├── Existing edge functions                 (submit-lead, create-company,
-        │                                            invite-member, etc.)
-        └── NEW edge functions                      (compute-opi, select-focus-portfolio,
-                                                     grade-evidence, governance-report,
-                                                     determine-lifecycle)
-                 ↑
-                 │ each new edge function uses
-                 │ the engine logic specified in
-                 │
-        bds-OS (design / IP repo)
-        ├── src/engines/*.ts        (pure functions, blueprint for Lovable's edge functions)
-        ├── supabase/migrations/    (blueprint for new Lovable Cloud migrations)
-        └── docs/integration-plan.md (this file)
-```
-
-`bds-OS`'s engines and migrations are **blueprints**. Lovable adapts them to its codebase via prompts. The actual deployed code lives in `strategy-spark-86`.
-
----
-
-## Category mapping (Lovable canonical, bds-OS noted)
-
-| Lovable category (canonical) | Display name | bds-OS area equivalent (deprecated) |
-|---|---|---|
-| `strategic_planning` | Strategic Planning | partial overlap with Governance & Leadership |
-| `management` | Management & Administration | no direct equivalent |
-| `kpi_okr` | KPI-OKR | partial overlap with Governance & Leadership |
-| `operations` | Operations | matches Delivery & Operations |
-| `human_resources` | Human Resources | matches People & Organization |
-| `it` | IT - AI | matches Technology & Infrastructure |
-| `market_intelligence` | Market Intelligence | partial overlap with Marketing & Brand |
-| `sales_marketing` | Sales & Marketing | combines Go-To-Market & Sales + Marketing & Brand |
-
-bds-OS's areas with no Lovable equivalent (deprecated): `Finance & Unit Economics`, `Product & Offering`.
-
-This is significant. Lovable's categorisation skews leadership / operations / functional. bds-OS's was more functional / P&L flavoured. We accept Lovable's framing.
-
-**Implication**: bds-OS's per-area scoring logic, focus-portfolio area-balancing, and area-level governance reports all need to be reframed against Lovable's 8 categories. The math doesn't change, but the names and groupings do.
+| **D1** | **Lovable Cloud is the canonical backend.** No own Supabase project. | Already running, no migration risk. |
+| **D2** | **Lovable's schema is the canonical schema.** | Already in production with real data. |
+| **D3** | **Lovable's 8 categories are canonical.** bds-OS's `data/areas.json` deprecated. | Already in production. |
+| **D4** | **Lovable's 75 questions in `src/data/questions.ts` are canonical.** bds-OS's `data/practices.json` deprecated as the user-facing list **— but its calibrated metadata + rubrics are inherited via `data/lovable-question-mapping.json`.** | Lovable's questions are deployed; bds-OS's calibration work is reusable via mapping. Best of both. |
+| **D5** | **`round_responses.category_scores` jsonb shape stays.** | Lovable's frontend already reads/writes this shape. |
+| **D6** | **Both OTV and OPI ship as complementary lenses.** | Different purposes. |
+| **D7** | **`bds-OS` is the design / IP repo. `strategy-spark-86` is the deployed code.** | Two repos coexist. |
+| **D8** | **Sync: Claude Code writes directly to both repos via PR.** | MCP scope covers both. |
 
 ---
 
 ## What we ADD to Lovable Cloud (the integration scope)
 
 ### New tables
-All use `company_id` (not `organization_id`) and reference Lovable's existing tables.
+All use `company_id`. RLS uses Lovable's `has_company_role` helper.
 
-| Table | Purpose | Roughly maps from bds-OS |
+| Table | Purpose | Status |
 |---|---|---|
-| `lifecycle_weights` | Per-stage OPI weights (5 numeric weights × 4 stages) | identical to bds-OS table |
-| `practice_metadata` | Per-practice P&L impact, speed-to-impact, dependency, risk floor (1–5 each) | identical structure, but keyed to Lovable's `questionId` strings rather than `practice_id` integers |
-| `maturity_rubrics` | 5 maturity levels per practice with descriptor + evidence criteria | renamed from bds-OS `maturity_levels`; keyed to Lovable's `questionId` |
-| `opi_scores` | Computed OPI per practice per round, with phase + rank | from bds-OS schema, `company_id` instead of `organization_id` |
-| `focus_portfolios` | Quarterly WIP-capped selection of practices | from bds-OS schema, `company_id` |
-| `initiatives` | Execution units, 7-status workflow | from bds-OS schema, `company_id` |
-| `artifacts` | Files attached to initiatives | from bds-OS schema |
-| `evidence` | Evidence rows graded by AI | from bds-OS schema |
-| `score_change_requests` | Maturity level upgrade requests | from bds-OS schema, `company_id` |
-| `approvals` | Senior verifications of score changes | from bds-OS schema |
-| `audit_log` | Append-only history of state changes | from bds-OS schema, `company_id` |
-| `invitations` | Email-invite team members (separate from existing `company_members.invited_by`) | from bds-OS schema, `company_id` |
+| `lifecycle_weights` | Per-stage OPI weights + modifier | M2: schema seeded |
+| `practice_metadata` | Per-question P&L/speed/dep/risk | M2: schema; M3.5: real metadata via mapping |
+| `maturity_rubrics` | 5-level rubric per question | M2: schema; M3.6: real rubrics via mapping (next push) |
+| `opi_scores` | Computed OPI per question per round | M3 |
+| `focus_portfolios` | Quarterly WIP-capped selection | M4 |
+| `initiatives` + `artifacts` | Execution units | M4 |
+| `evidence` | AI-graded proof bundles | M5 (not yet) |
+| `score_change_requests` + `approvals` | Maturity upgrade flow | M5 |
+| `audit_log` | Append-only history | M7 |
+| `invitations` | Email-token invites | M7 |
 
 ### New columns on existing tables
-- `companies.lifecycle_stage` enum (`startup | growth | scale | mature`) — drives OPI weights
-- `companies.industry`, `companies.revenue_range`, `companies.employee_count`, `companies.years_in_operation` — inputs to `determine-lifecycle`
-- `evaluation_rounds.mode` enum (`quick | full`) — distinguishes the public funnel's quick assessment from the deep team assessment
+- `companies.lifecycle_stage` enum + revenue/employee/years inputs
+- `evaluation_rounds.mode` enum (quick | full)
 
-### New edge functions (Lovable implements based on bds-OS specs)
-- `determine-lifecycle` — takes `company_id`, computes lifecycle stage from revenue + headcount, persists
-- `compute-opi` — takes `round_id` and `company_id`, reads `round_responses.category_scores` jsonb, applies bds-OS's OPI engine logic, writes to `opi_scores`
-- `select-focus-portfolio` — takes `company_id`, `round_id`, `quarter`; applies WIP cap and selection rules; writes to `focus_portfolios`; auto-creates initiative stubs
-- `grade-evidence` — takes `evidence_id`; AI-grades against the practice's maturity rubric; writes back to `evidence`; advances initiative status
-- `governance-report` — takes `company_id` and `view_type ∈ executive | board | functional`; returns the appropriate dashboard data
-
-### bds-OS engine adapter
-The bds-OS engines under `src/engines/` were written to consume per-practice rows. They need a thin adapter that reads Lovable's jsonb and produces the engine input. This adapter lives in this repo (`src/adapters/`) as a blueprint, and Lovable's edge functions call it (or implement equivalent logic).
-
-Adapter responsibilities:
-1. Read `round_responses.category_scores` jsonb for a given round
-2. Flatten into per-practice records: `{ questionId, importance, competency, category }`
-3. Look up `practice_metadata` for each `questionId`
-4. Pass to the OPI engine
-5. Return OPI results
+### New edge functions
+- `compute-opi` (M3, deployed on branch)
+- `select-focus-portfolio` (M4, deployed on branch)
+- `determine-lifecycle` (M3, deployed on branch)
+- `grade-evidence` (M5, blueprint only — LLM call stubbed)
+- `governance-report` (M6, blueprint only)
 
 ---
 
-## What does NOT change
+## Roadmap (revised 2026-05-08)
 
-- Lovable's existing tables (no renames, no destructive migrations)
-- Lovable's existing edge functions (`submit-lead`, `create-company`, `invite-member`, etc.) — they keep their current names
-- Lovable's existing screens (landing, assessment funnel, lead gate, dashboard, company view, round-by-code, admin)
-- Lovable's existing analytics (gap, overall_score, OTV pillars, industry benchmarks, round-over-round trends, PDF/CSV export)
+### M1 — Foundation specs — **DONE 2026-05-05**
+### M2 — Schema in strategy-spark-86 — **DONE 2026-05-05**
+### M3 — OPI computation backend — **DONE 2026-05-05**
+### M3.5 — OPI tab UI + Focus Portfolio UI — **DONE 2026-05-05** (combined with M4 work)
+### M4 — Focus Portfolio backend + UI — **DONE 2026-05-05**
+### M3.5b — Real practice_metadata seed — **IN PROGRESS 2026-05-08**
+Replace placeholder seed with calibrated values inherited from bds-OS via `data/lovable-question-mapping.json`. 68 of 75 rows inherit directly; 7 are authored fresh (4 AI questions + ecosystems + AI workflow + talent deployment).
 
----
+### M3.6 — Maturity rubrics seed — **NEXT**
+Generate `maturity_rubrics` seed (5 levels × 75 questions = 375 rows): 340 inherited via mapping, 35 (= 7 unmapped × 5) authored fresh.
 
-## Roadmap (post-deadline-discovery, no firm dates)
+### M5 — Evidence loop — **2 days**
+- Migrations: `evidence`, `artifacts`, `score_change_requests`, `approvals`
+- Edge function: `grade-evidence` (LLM call wired to Anthropic)
+- Frontend: initiative detail with evidence upload + AI grading panel
 
-### M1 — Foundation specs (this repo, ~1 day)
-- Update `docs/lovable-state.md` with the practice / category data we now have
-- Write `src/adapters/jsonb-to-opi-input.ts` blueprint
-- Write per-table SQL migration blueprints for the new tables Lovable should add
-- Write per-edge-function source blueprints that Lovable adapts
+### M6 — Governance views — **1 day**
+### M7 — Audit log + invitations — **0.5 day**
 
-### M2 — Lovable applies foundational schema (Lovable, ~half day)
-User pastes specs in this order:
-1. Add `lifecycle_stage` and metadata columns to `companies`
-2. Add `lifecycle_weights` table + seed
-3. Add `practice_metadata` table + seed (one row per Lovable question)
-4. Add `maturity_rubrics` table + seed (5 rows per Lovable question — biggest content lift)
-5. Add `mode` column to `evaluation_rounds`
-
-### M3 — Add OPI computation (Lovable + this repo, ~1 day)
-- Lovable adds `opi_scores` table
-- Lovable adds `compute-opi` edge function (using our spec)
-- Lovable adds an "OPI view" tab to the round results screen
-- Test: a full round → compute → see Phase 1/2/3 grouping with risk-floor flags
-
-### M4 — Focus portfolio (Lovable + this repo, ~1 day)
-- Lovable adds `focus_portfolios` and `initiatives` tables
-- Lovable adds `select-focus-portfolio` edge function
-- Lovable adds a "Focus Portfolio" screen to the company dashboard
-
-### M5 — Evidence loop (Lovable + this repo, ~2 days)
-- Lovable adds `evidence`, `artifacts`, `score_change_requests`, `approvals` tables
-- Lovable adds `grade-evidence` edge function
-- Lovable adds initiative detail screen with evidence upload + AI grading panel
-
-### M6 — Governance views (Lovable + this repo, ~1 day)
-- Lovable adds `governance-report` edge function
-- Lovable adds three dashboards: executive, board, functional
-
-### M7 — Audit log + invitations (Lovable + this repo, ~half day)
-- Lovable adds `audit_log` and `invitations` tables
-- Lovable adds `invite-user` and `accept-invitation` edge functions (replacing or augmenting the existing `invite-member` / `send-invite-email`)
-- Lovable adds an admin "team management" screen
-
-**Total estimate**: ~6–7 days of focused work across both sides. Sequencing is intentional — each milestone produces something user-visible.
+**Total remaining to credible v1:** ~5 working days (M3.5b + M3.6 + M5 + M6 + validation).
 
 ---
 
-## Maintenance & docs to update as we go
+## Resolved open questions (vs. earlier draft)
 
-- After M2: update `src/types/Database.ts` to reflect Lovable's schema + new additions; deprecate the bds-OS-naming version
-- After M3: update `docs/frontend-contract.md` to reflect actual Lovable endpoints (canonical names, jsonb shape)
-- After each milestone: update `docs/lovable-state.md` status section so future sessions see what's actually deployed
+- ~~**Practice metadata content**~~ — **resolved.** 68 of 75 inherit from bds-OS's calibrated 82; 7 authored fresh in this push.
+- ~~**Maturity rubrics content**~~ — **resolvable.** Same mapping path. Next push.
+- ~~**`category_scores` jsonb shape**~~ — resolved 2026-05-05 (verified against `RoundAssessment.tsx`).
 
-`docs/v1-plan.md` is now obsolete (it described bds-OS's standalone v1 before we knew about Lovable's existing implementation). Delete or mark deprecated.
+## Still open
 
----
-
-## Open questions to resolve along the way
-
-1. **Industry benchmarks** (Lovable already has these): do we want to feed bds-OS's OPI scores into the same benchmark mechanism, or keep benchmarks gap-only?
-2. **Round-over-round trends** (Lovable has these for gap; bds-OS has placeholder for OPI trends): unify or keep separate?
-3. **Existing `invite-member` flow**: keep it for the simple "add to company" case, and add `invitations` for cross-domain invitations? Or replace?
-4. **Practice metadata content**: who provides the P&L impact / speed / dependency / risk_floor values for Lovable's 83 practices? bds-OS's seeds map to its own 82, not Lovable's 83. Probably needs human curation by the product owner.
-5. **Maturity rubrics content** (5 levels × 83 practices = 415 rubric entries): same — bds-OS's are written for its own 82. Big content lift to author for Lovable's 83.
+1. **Industry benchmarks** — keep gap-only or feed OPI scores in?
+2. **Round-over-round trends** — unify or keep separate?
+3. **Existing `invite-member` flow** — keep or replace with `invitations`?
+4. **Lifecycle stage UI** — currently no way for a user to set `companies.lifecycle_stage` without SQL editor. Add a small dropdown in CompanyDashboard (~1 hour).

@@ -1,4 +1,4 @@
-# Lovable's actual state (as of 2026-05-04)
+# Lovable's actual state (as of 2026-05-04, count corrected 2026-05-05)
 
 This doc captures what's currently shipped in the Lovable frontend (`wbardawil/strategy-spark-86`), how it diverges from what `bds-OS` describes, and the strategic paths to reconcile them. Read this before assuming the two halves agree — they don't.
 
@@ -6,7 +6,7 @@ This doc captures what's currently shipped in the Lovable frontend (`wbardawil/s
 
 ## TL;DR
 
-**Lovable built a simpler product than `bds-OS` describes.** They are not different naming for the same thing — they're two different products at different depths. No reconciliation has happened. For tomorrow's demo (2026-05-05), we use Lovable as-is. The deep reconciliation is a post-demo decision.
+**Lovable built a simpler product than `bds-OS` describes.** They are not different naming for the same thing — they're two different products at different depths. No reconciliation has happened beyond the M1 foundation specs in `docs/blueprints/`.
 
 ---
 
@@ -63,10 +63,30 @@ Tables (6) and enums (2) Lovable's frontend reads/writes:
 - `round_status`: active | closed
 
 ### Key database functions
-- `has_company_role` — RLS helper
+- `has_company_role` — RLS helper (the one to use in all new policies)
 - `count_user_owned_companies` — enforces max 3 owned companies per user
 - `generate_round_code` — generates the 6-char share code
 - `handle_new_user` — auto-creates `profiles` row on signup
+
+---
+
+## Lovable's question ontology (canonical for the integrated product)
+
+Defined in `src/data/questions.ts`. **75 questions across 8 categories** (recount 2026-05-05 — earlier docs claimed 83).
+
+| Category key | Display | Count | First..Last id |
+|---|---|---|---|
+| `strategic_planning` | Strategic Planning | 7 | sp_1..sp_7 |
+| `management` | Management & Administration | 14 | ma_1..ma_14 |
+| `kpi_okr` | KPI-OKR | 6 | ko_1..ko_6 |
+| `operations` | Operations | 6 | op_1..op_6 |
+| `human_resources` | Human Resources | 16 | hr_1..hr_16 |
+| `it` | IT - AI | 15 | it_1..it_15 |
+| `market_intelligence` | Market Intelligence | 7 | mi_1..mi_7 |
+| `sales_marketing` | Sales & Marketing | 4 | sm_1..sm_4 |
+| **Total** | | **75** | |
+
+No maturity-level ontology around them. The 5-level rubric is added in M2 via the `maturity_rubrics` table (5 × 75 = 375 entries to author).
 
 ---
 
@@ -113,7 +133,7 @@ Two parallel entry points that converge in the team platform.
 | Member-equivalent | `company_members` (owner/admin/member) | `users` (admin/leader/functional_lead) |
 | Round | `evaluation_rounds` + 6-char share code | `assessment_rounds` |
 | Scoring shape | jsonb `category_scores`, free-form categories | one row per (round, practice) — 82 practices |
-| Practice ontology | **none** | 82 practices × 8 areas × 5 maturity levels (410 rubric entries) |
+| Practice ontology | **75 questions × 8 categories** (no maturity rubric yet) | 82 practices × 8 areas × 5 maturity levels (410 rubric entries) |
 | Practice metadata (P&L impact, speed, dependency, risk) | **none** | per-practice metadata table |
 | OPI engine | **none** | full implementation in `src/engines/opi.ts` |
 | Lifecycle stage + weights | **none** | startup / growth / scale / mature, weights table |
@@ -127,50 +147,30 @@ Two parallel entry points that converge in the team platform.
 
 ### Architectural read
 
-`bds-OS` is the deeper, opinionated operating-maturity system the original product brief describes. Lovable is a working but shallower assessment funnel + team workspace. They overlap in the abstract concept ("score practices, see results") but share zero code, zero tables, and zero edge function names.
+`bds-OS` is the deeper, opinionated operating-maturity system the original product brief describes. Lovable is a working but shallower assessment funnel + team workspace. They overlap in the abstract concept ("score practices, see results") but share zero code, zero tables, and zero edge function names — until M2 onward, when the blueprints in `docs/blueprints/` are ported into `strategy-spark-86`.
 
 ---
 
-## Three strategic paths (decide post-demo)
+## Strategic path (post-demo, decided 2026-05-05)
 
-### Path 1 — Lovable is the product
-- Archive `bds-OS`'s deep engines and reference data.
-- Ship the simpler assessment + team workspace.
-- Pros: already working, faster to launch.
-- Cons: throws away the IP (82-practice ontology, OPI math, lifecycle model, evidence loop). Competitive moat reduced.
-
-### Path 2 — `bds-OS` is the product
-- Lovable's current implementation is a v0 prototype. Rebuild Lovable's UI on top of `bds-OS`'s schema.
-- Pros: ships the deep, defensible product.
-- Cons: rebuild ~all of Lovable's frontend, lose the public lead funnel and share-code flow unless re-implemented.
-
-### Path 3 — both ship in phases (hybrid)
-- Lovable's funnel becomes the **public / sales / lead-capture layer** (free, no auth).
-- `bds-OS`'s schema becomes the **paid / team / depth layer** (requires sign-up, accessed at `/dashboard` and beyond).
-- Migrate Lovable's `companies` → `organizations`, `company_members` → `users`, `evaluation_rounds` → `assessment_rounds`, etc., once a user signs up. Add `bds-OS`'s missing tables (`opi_scores`, `focus_portfolios`, `lifecycle_weights`, `practice_metadata`, `maturity_levels`, `initiatives`, `evidence`, `score_change_requests`, `approvals`, `audit_log`) onto the same Supabase project.
-- Adapt Lovable's existing post-signup screens to consume the deeper data (replace category sliders with the 82-practice grid, add OPI results screen, add focus portfolio screen).
-- Pros: preserves both efforts. Lovable's funnel stays as the lead engine. The depth gets the buyer to "wow." Can ship the funnel now and the depth incrementally.
-- Cons: most engineering work. Requires careful migration so existing companies/members aren't broken.
+**Path 3 (hybrid).** Lovable's funnel becomes the **public / sales / lead-capture layer**; `bds-OS`'s schema becomes the **paid / team / depth layer**. See `docs/integration-plan.md` for the milestone-by-milestone plan.
 
 ---
 
-## Recommendation
-
-**Path 3 (hybrid).** Lovable's lead funnel and share-code rounds are real product value worth keeping — those are exactly the kind of frictionless entry points a B2B SaaS needs. `bds-OS`'s depth is the differentiator and the buyer-facing IP. Combining them yields a stronger product than either alone.
-
-But this is **deferred until after the 2026-05-05 demo**. Tomorrow's demo runs on Lovable as-is. The strategic decision happens after we see the friend's reaction.
-
----
-
-## Status as of 2026-05-04
+## Status as of 2026-05-05
 
 - Lovable preview is live and working.
-- `bds-OS`'s migrations and edge functions are **not** deployed against any Supabase project linked to Lovable. Lovable runs on its own schema (probably Lovable Cloud — not yet confirmed which Supabase project).
-- No reconciliation has been attempted.
-- Tomorrow's demo: use Lovable's existing path (`/` → `/assessment` → `/auth` → `/dashboard` → `/company/:id` → round → results).
+- M1 foundation specs (this commit) authored on `claude/integrate-frontend-backend-kVV84`.
+- M2+ migrations and edge functions to be ported to `strategy-spark-86` via PR.
 
-## Open questions for after the demo
+## Resolved open questions
 
-1. Is the database on **Lovable Cloud** (Lovable-managed) or on a **Supabase project the user owns**? This determines whether `bds-OS`'s migrations can be applied directly or require working through Lovable.
-2. Does Lovable's "category" model in `category_scores` jsonb correspond to anything in `bds-OS`'s 8 areas? Or are they entirely different categorisation?
-3. Does the demo confirm the buyer wants the **simpler funnel** or the **deeper system**?
+1. Database is on **Lovable Cloud** (Lovable-managed). Schema lands via `strategy-spark-86/supabase/migrations/` and Lovable Cloud applies on push.
+2. Lovable's category model (`strategic_planning`, etc.) does not map cleanly to bds-OS's 8 areas. Lovable's framing is canonical (D3).
+3. Buyer feedback from 2026-05-05 demo informs M2+ priorities (record outcome here).
+
+## Still open
+
+4. Practice metadata content (P&L impact, speed, dependency, risk floor per question) — needs product-owner curation.
+5. Maturity rubric content (5 × 75 = 375 entries) — needs product-owner curation.
+6. `category_scores` jsonb exact shape — verify against `submit-round-response` source in M2.
